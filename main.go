@@ -49,6 +49,8 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Add("Content-Type", "audio/flac")
+
 	http.ServeFile(w, r, filePath)
 }
 
