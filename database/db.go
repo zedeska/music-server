@@ -26,7 +26,7 @@ func InitDB() {
 		CREATE TABLE IF NOT EXISTS user (
 			id_user INTEGER PRIMARY KEY AUTOINCREMENT,
 			username VARCHAR(50),
-			password TEXT,
+			password TEXT
 		);
 
 		CREATE TABLE IF NOT EXISTS track (
@@ -40,7 +40,7 @@ func InitDB() {
 			duration INTEGER,
 			cover TEXT,
 			sample_rate INTEGER,
-			bitrate INTEGER,
+			bitrate INTEGER
 		);
 
 		CREATE TABLE IF NOT EXISTS playlist (
@@ -49,6 +49,7 @@ func InitDB() {
 			name VARCHAR(50),
 			FOREIGN KEY (id_user) REFERENCES user(id)
 		);
+
 		COMMIT;
 	`)
 	if err != nil {
