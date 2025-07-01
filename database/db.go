@@ -68,10 +68,6 @@ func CheckIfTrackExists(id int) bool {
 
 	var track Track
 	err = db.QueryRow("SELECT * FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
-	if err != nil {
-		log.Fatalf("Failed to execute query: %v", err)
-	}
-
 	if track.ID == 0 || err != nil {
 		return false
 	} else {
