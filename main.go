@@ -88,6 +88,12 @@ func play(id int) (string, error) {
 		}
 
 		return file_path, nil
+	} else {
+		track, err := db.GetTrack(id)
+		if err != nil {
+			return "", fmt.Errorf("failed to get track: %w", err)
+		}
+
+		return track.Path, nil
 	}
-	return "", errors.New("Track already exists in the database")
 }

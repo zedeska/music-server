@@ -81,6 +81,22 @@ func CheckIfTrackExists(id int) bool {
 	return true
 }
 
+func GetTrack(id int) (*Track, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	var track Track
+	err = db.QueryRow("SELECT * FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return &track, nil
+}
+
 func AddTrack(track Track) error {
 	db, err := sql.Open("sqlite3", "./db.db")
 	if err != nil {
