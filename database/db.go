@@ -92,8 +92,8 @@ func AddTrack(track Track) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO track (id, title, path, artist, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		track.ID, track.Title, track.Path, track.Artist, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
+	_, err = db.Exec("INSERT INTO track (id, title, path, filename, artist, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
 	}
