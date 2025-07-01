@@ -25,7 +25,7 @@ func main() {
 	}
 
 	http.HandleFunc("/play", playHandler)
-	http.ListenAndServe(":6666", nil)
+	http.ListenAndServe(":8488", nil)
 
 }
 
