@@ -25,6 +25,7 @@ func main() {
 	}
 
 	http.HandleFunc("/play", playHandler)
+	http.HandleFunc("/search", searchHandler)
 	http.ListenAndServe(":8488", nil)
 
 }
@@ -52,6 +53,25 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "audio/flac")
 
 	http.ServeFile(w, r, filePath)
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+
+	if query == "" {
+		http.Error(w, "Missing search query", http.StatusBadRequest)
+		return
+	}
+
+	results, err := qobuz.Search(query)
+	if err != nil {
+		http.Error(w, "Invalid search query", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(results.ToJSON())
 }
 
 func play(id int) (string, error) {

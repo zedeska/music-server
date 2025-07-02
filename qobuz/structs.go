@@ -1,5 +1,7 @@
 package qobuz
 
+import "encoding/json"
+
 type qobuz_search_result struct {
 	Query  string `json:"query"`
 	Albums struct {
@@ -410,4 +412,12 @@ type Label struct {
 
 type RecordingInfo struct {
 	RelativeURL string `json:"relative_url"`
+}
+
+func (p qobuz_search_result) ToJSON() []byte {
+	jsonData, err := json.Marshal(p)
+	if err != nil {
+		return []byte("{}")
+	}
+	return jsonData
 }
