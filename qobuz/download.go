@@ -83,11 +83,15 @@ func Download(id int, quality string, path string) error {
 
 	url, err = squidDownload(id, quality)
 	if err != nil {
+		fmt.Println("Squid download failed, trying DAB...")
 		url, err = dabDownload(id, quality)
 		if err != nil {
 			return fmt.Errorf("error downloading track: %w", err)
 		}
+		fmt.Println("DAB download successful")
 	}
+
+	fmt.Println(url)
 
 	request := goaxios.GoAxios{
 		Url:    url,
