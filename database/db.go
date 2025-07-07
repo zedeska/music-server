@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -72,7 +73,7 @@ func CheckIfTrackExists(id int) bool {
 		return false
 	} else {
 		_, err := os.Stat(track.Path)
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			db.QueryRow("DELETE FROM track WHERE id = ?", track.ID)
 			return false
 		}
