@@ -18,7 +18,8 @@ type DabDLResult struct {
 }
 
 type SquidDLResult struct {
-	Data []struct {
+	Success bool `json:"success"`
+	Data    []struct {
 		Url string `json:"url"`
 	} `json:"data"`
 }
