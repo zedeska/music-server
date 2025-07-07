@@ -23,10 +23,11 @@ type SquidDLResult struct {
 	} `json:"data"`
 }
 
-func dabDownload(id int) (string, error) {
+func dabDownload(id int, quality string) (string, error) {
 	request := goaxios.GoAxios{
 		Url: DAB_API_URL + "stream",
 		Query: map[string]string{
+			"quality": quality,
 			"trackId": strconv.Itoa(id),
 		},
 		Method: "GET",
@@ -46,11 +47,11 @@ func dabDownload(id int) (string, error) {
 
 }
 
-func squidDownload(id int) (string, error) {
+func squidDownload(id int, quality string) (string, error) {
 	request := goaxios.GoAxios{
 		Url: SQUID_API_URL + "download-music",
 		Query: map[string]string{
-			"quality":  "27",
+			"quality":  quality,
 			"track_id": strconv.Itoa(id),
 		},
 		Method: "GET",
@@ -66,14 +67,19 @@ func squidDownload(id int) (string, error) {
 	}
 
 	result, _ := res.Body.(*SquidDLResult)
+
+	if len(result.Data) == 0 {
+		return "", fmt.Errorf("no download URL found")
+	}
+
 	return result.Data[0].Url, nil
 }
 
-func Download(id int, path string) error {
+func Download(id int, quality string, path string) error {
 
-	url, err := squidDownload(id)
+	url, err := squidDownload(id, quality)
 	if err != nil {
-		url, err = dabDownload(id)
+		url, err = dabDownload(id, quality)
 		if err != nil {
 			return fmt.Errorf("error downloading track: %w", err)
 		}

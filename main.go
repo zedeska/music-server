@@ -84,7 +84,10 @@ func play(id int) (string, error) {
 		file_name := RandomString(50)
 		file_path := filepath.Join(SONG_FOLDER, file_name)
 
-		qobuz.Download(qobuzTrack.ID, file_path)
+		err := qobuz.Download(qobuzTrack.ID, "27", file_path)
+		if err != nil {
+			return "", err
+		}
 
 		year, _ := strconv.Atoi(strings.Split(qobuzTrack.ReleaseDateOriginal, "-")[0])
 
@@ -102,7 +105,7 @@ func play(id int) (string, error) {
 			SampleRate: qobuzTrack.MaximumSamplingRate,
 		}
 
-		err := db.AddTrack(*track)
+		err = db.AddTrack(*track)
 		if err != nil {
 			return "", err
 		}
