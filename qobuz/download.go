@@ -78,7 +78,10 @@ func squidDownload(id int, quality string) (string, error) {
 
 func Download(id int, quality string, path string) error {
 
-	url, err := squidDownload(id, quality)
+	var url string
+	var err error
+
+	url, err = squidDownload(id, quality)
 	if err != nil {
 		url, err = dabDownload(id, quality)
 		if err != nil {
