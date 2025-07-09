@@ -39,6 +39,7 @@ func main() {
 
 	http.HandleFunc("/play", playHandler)
 	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/login", LoginHandler)
 	http.ListenAndServe(":8488", nil)
 
 }
