@@ -29,7 +29,7 @@ func InitDB() {
 			id_user INTEGER PRIMARY KEY AUTOINCREMENT,
 			username VARCHAR(20),
 			password TEXT,
-			token VARCHAR(50),
+			token VARCHAR(50)
 		);
 
 		CREATE TABLE IF NOT EXISTS track (
