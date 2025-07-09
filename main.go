@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	db "music-server/database"
@@ -13,6 +14,18 @@ import (
 )
 
 var SONG_FOLDER string
+
+type custom_search_result struct {
+	Tracks []db.Track `json:"tracks"`
+}
+
+func (p custom_search_result) ToJSON() []byte {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return nil
+	}
+	return data
+}
 
 func main() {
 
@@ -63,10 +76,25 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := qobuz.Search(query)
+	temp_results, err := qobuz.Search(query)
 	if err != nil {
 		http.Error(w, "Invalid search query", http.StatusBadRequest)
 		return
+	}
+
+	var results custom_search_result
+
+	for _, track := range temp_results.Tracks.Items {
+		results.Tracks = append(results.Tracks, db.Track{
+			ID:         track.ID,
+			Title:      track.Title,
+			Artist:     track.Performer.Name,
+			Album:      track.Album.Title,
+			Duration:   track.Duration,
+			Cover:      track.Album.Image.Large,
+			Bitrate:    track.MaximumBitDepth,
+			SampleRate: float32(track.MaximumSamplingRate),
+		})
 	}
 
 	w.Header().Add("Content-Type", "application/json")
