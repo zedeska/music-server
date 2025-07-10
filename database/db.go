@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"music-server/utils"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -132,6 +133,28 @@ func Login(username, password string) (string, error) {
 
 	if !VerifyPassword(password, storedPassword) {
 		return "", errors.New("invalid username or password")
+	}
+
+	return token, nil
+}
+
+func Register(username, password string) (string, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return "", fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	hashedPassword, err := HashPassword(password)
+	if err != nil {
+		return "", fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	token := utils.RandomString(50)
+
+	_, err = db.Exec("INSERT INTO user (username, password, token) VALUES (?, ?, ?)", username, hashedPassword, token)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute query: %w", err)
 	}
 
 	return token, nil
