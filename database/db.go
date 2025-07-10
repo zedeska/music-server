@@ -145,6 +145,17 @@ func Register(username, password string) (string, error) {
 	}
 	defer db.Close()
 
+	var exists int
+	// Check if username already exists	var exists int
+	err = db.QueryRow("SELECT COUNT(*) FROM user WHERE username = ?", username).Scan(&exists)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	if exists > 0 {
+		return "", errors.New("username already exists")
+	}
+
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return "", fmt.Errorf("failed to hash password: %w", err)
