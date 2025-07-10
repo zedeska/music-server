@@ -48,15 +48,31 @@ func main() {
 
 func playHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
+	token := r.URL.Query().Get("token")
 
 	if idStr == "" {
 		http.Error(w, "Missing track ID", http.StatusBadRequest)
 		return
 	}
 
+	if token == "" {
+		http.Error(w, "Missing authentication token", http.StatusUnauthorized)
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid track ID", http.StatusBadRequest)
+		return
+	}
+
+	tokenValid, err := db.CheckToken(token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if !tokenValid {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

@@ -9,7 +9,6 @@ import (
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func InitDB() {
@@ -131,7 +130,7 @@ func Login(username, password string) (string, error) {
 		return "", fmt.Errorf("failed to execute query: %w", err)
 	}
 
-	if !VerifyPassword(password, storedPassword) {
+	if !utils.VerifyPassword(password, storedPassword) {
 		return "", errors.New("invalid username or password")
 	}
 
@@ -156,7 +155,7 @@ func Register(username, password string) (string, error) {
 		return "", errors.New("username already exists")
 	}
 
-	hashedPassword, err := HashPassword(password)
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -171,14 +170,18 @@ func Register(username, password string) (string, error) {
 	return token, nil
 }
 
-// HashPassword generates a bcrypt hash for the given password.
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
+func CheckToken(token string) (bool, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return false, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
 
-// VerifyPassword verifies if the given password matches the stored hash.
-func VerifyPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+	var exists int
+	err = db.QueryRow("SELECT COUNT(*) FROM user WHERE token = ?", token).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return exists > 0, nil
 }
