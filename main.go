@@ -6,6 +6,7 @@ import (
 	"fmt"
 	db "music-server/database"
 	"music-server/qobuz"
+	"music-server/utils"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,6 +41,7 @@ func main() {
 	http.HandleFunc("/play", playHandler)
 	http.HandleFunc("/search", searchHandler)
 	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/register", RegisterHandler)
 	http.ListenAndServe(":8488", nil)
 
 }
@@ -94,6 +96,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(token))
 }
 
+func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	token, err := db.Register(creds.Username, creds.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(token))
+}
+
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("query")
 
@@ -135,7 +162,7 @@ func play(id int) (string, error) {
 			return "", errors.New("Track not found")
 		}
 
-		file_name := RandomString(50)
+		file_name := utils.RandomString(50)
 		file_path := filepath.Join(SONG_FOLDER, file_name)
 
 		err := qobuz.Download(qobuzTrack.ID, "27", file_path)
