@@ -120,16 +120,22 @@ func Download(id int, quality string, path string) error {
 
 	f, err := flac.ParseFile(path)
 	if err != nil {
+		os.Remove(path)
 		return fmt.Errorf("error parsing FLAC file: %w", err)
 	}
+	defer f.Close()
 
 	data, err := f.GetStreamInfo()
 	if err != nil {
+		os.Remove(path)
 		return fmt.Errorf("error getting stream info: %w", err)
 	}
 
 	time := data.SampleCount / int64(data.SampleRate)
-	fmt.Println("Duration:", time, "seconds")
+	if time == 30 {
+		os.Remove(path)
+		return fmt.Errorf("track duration is 30 seconds, which means it's probably a preview or not available in full length")
+	}
 
 	return nil
 }
