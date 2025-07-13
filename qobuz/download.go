@@ -64,7 +64,7 @@ func squidDownload(id int, quality string) (string, error) {
 
 	res := request.RunRest()
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return "", fmt.Errorf("error fetching squid download URL: %w", res.Error)
+		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
 	result, _ := res.Body.(*SquidDLResult)
@@ -88,6 +88,8 @@ func Download(id int, quality string, path string) error {
 			return fmt.Errorf("error downloading track: %w", err)
 		}
 	}
+
+	fmt.Println("Download URL:", url)
 
 	request := goaxios.GoAxios{
 		Url:    url,
