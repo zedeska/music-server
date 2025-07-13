@@ -10,7 +10,7 @@ import (
 	"github.com/opensaucerer/goaxios"
 )
 
-var DAB_API_URL string = "https://dab.yeet.su/api/"
+var DAB_API_URL string = "https://dabmusic.xyz/api/"
 var SQUID_API_URL string = "https://eu.qobuz.squid.wtf/api/"
 
 type DabDLResult struct {
@@ -19,7 +19,7 @@ type DabDLResult struct {
 
 type SquidDLResult struct {
 	Success bool `json:"success"`
-	Data    []struct {
+	Data    struct {
 		Url string `json:"url"`
 	} `json:"data"`
 }
@@ -31,15 +31,14 @@ func dabDownload(id int, quality string) (string, error) {
 			"quality": quality,
 			"trackId": strconv.Itoa(id),
 		},
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
 		Method:         "GET",
 		ResponseStruct: &DabDLResult{},
 	}
 
 	res := request.RunRest()
-
-	fmt.Println("Response Status Code:", res.Response.StatusCode)
-	fmt.Println("Response Body:", string(res.Bytes))
-	fmt.Println("Response Error:", res.Error)
 
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
@@ -66,21 +65,17 @@ func squidDownload(id int, quality string) (string, error) {
 
 	res := request.RunRest()
 
-	fmt.Println("Response Status Code:", res.Response.StatusCode)
-	fmt.Println("Response Body:", string(res.Bytes))
-	fmt.Println("Response Error:", res.Error)
-
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
 	result, _ := res.Body.(*SquidDLResult)
 
-	if len(result.Data) == 0 {
-		return "", fmt.Errorf("no download URL found")
+	if !result.Success {
+		return "", fmt.Errorf("failed to fetch download URL: %s", string(res.Bytes))
 	}
 
-	return result.Data[0].Url, nil
+	return result.Data.Url, nil
 }
 
 func Download(id int, quality string, path string) error {
