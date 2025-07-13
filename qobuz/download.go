@@ -39,8 +39,8 @@ func dabDownload(id int, quality string) (string, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Response.Request.URL)
-	if res.Error != nil || res.Response.StatusCode != 200 {
+
+	if res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
@@ -64,8 +64,8 @@ func squidDownload(id int, quality string) (string, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Response.Request.URL)
-	if res.Error != nil || res.Response.StatusCode != 200 {
+
+	if res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
