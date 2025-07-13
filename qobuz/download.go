@@ -39,6 +39,7 @@ func dabDownload(id int, quality string) (string, error) {
 
 	fmt.Println("Response Status Code:", res.Response.StatusCode)
 	fmt.Println("Response Body:", string(res.Bytes))
+	fmt.Println("Response Error:", res.Error)
 
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
@@ -67,6 +68,7 @@ func squidDownload(id int, quality string) (string, error) {
 
 	fmt.Println("Response Status Code:", res.Response.StatusCode)
 	fmt.Println("Response Body:", string(res.Bytes))
+	fmt.Println("Response Error:", res.Error)
 
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
