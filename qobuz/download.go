@@ -31,20 +31,13 @@ func dabDownload(id int, quality string) (string, error) {
 			"quality": quality,
 			"trackId": strconv.Itoa(id),
 		},
-		Method: "GET",
-		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
-		},
+		Method:         "GET",
 		ResponseStruct: &DabDLResult{},
 	}
 
 	res := request.RunRest()
 
-	fmt.Println("DAB Download URL:", res.Response.Request.URL)
-	fmt.Println("DAB Download Status Code:", res.Response.StatusCode)
-	fmt.Println("DAB Download Body:", res.Body)
-
-	if res.Response.StatusCode != 200 {
+	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
@@ -69,7 +62,7 @@ func squidDownload(id int, quality string) (string, error) {
 
 	res := request.RunRest()
 
-	if res.Response.StatusCode != 200 {
+	if res.Error != nil || res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
