@@ -40,6 +40,10 @@ func dabDownload(id int, quality string) (string, error) {
 
 	res := request.RunRest()
 
+	fmt.Println("DAB Download URL:", res.Response.Request.URL)
+	fmt.Println("DAB Download Status Code:", res.Response.StatusCode)
+	fmt.Println("DAB Download Body:", res.Body)
+
 	if res.Response.StatusCode != 200 {
 		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
