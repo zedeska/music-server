@@ -118,7 +118,7 @@ func Download(id int, quality string, path string) error {
 		return err
 	}
 
-	f, err := flac.ParseBytes(reader)
+	f, err := flac.ParseFile(path)
 	if err != nil {
 		return fmt.Errorf("error parsing FLAC file: %w", err)
 	}
