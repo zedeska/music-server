@@ -1,3 +1,5 @@
+github.com/go-flac/go-flac/v2 v2.0.3 h1:gsodppSC2ThQzzdQMfnJQ8EN5TAtQDD9hx31BkNK2tU=
+github.com/go-flac/go-flac/v2 v2.0.3/go.mod h1:hvgeR2hElLbwk0Q1/vMazIDmIc2LAFSd9Bx/Fk6ViKo=
 github.com/mattn/go-sqlite3 v1.14.28 h1:ThEiQrnbtumT+QMknw63Befp/ce/nUPgBPMlRFEum7A=
 github.com/mattn/go-sqlite3 v1.14.28/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/opensaucerer/goaxios v0.0.6 h1:bPoICZDeBldoxsZ6oMec9bEFXSardLsxXoCfJG0n7Gw=

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/go-flac/go-flac/v2"
 	"github.com/opensaucerer/goaxios"
 )
 
@@ -116,6 +117,19 @@ func Download(id int, quality string, path string) error {
 	if err != nil {
 		return err
 	}
+
+	f, err := flac.ParseBytes(reader)
+	if err != nil {
+		return fmt.Errorf("error parsing FLAC file: %w", err)
+	}
+
+	data, err := f.GetStreamInfo()
+	if err != nil {
+		return fmt.Errorf("error getting stream info: %w", err)
+	}
+
+	time := data.SampleCount / int64(data.SampleRate)
+	fmt.Println("Duration:", time, "seconds")
 
 	return nil
 }
