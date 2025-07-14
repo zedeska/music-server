@@ -76,8 +76,8 @@ func CheckIfTrackExists(id int) bool {
 	} else {
 		_, err := os.Stat(track.Path)
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("file not found")
-			db.QueryRow("DELETE FROM track WHERE id = ?", track.ID)
+			fmt.Println("file not found", track.Path, track.ID)
+			db.Exec("DELETE FROM track WHERE id = ?", track.ID)
 			return false
 		}
 	}
