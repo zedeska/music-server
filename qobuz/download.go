@@ -1,13 +1,10 @@
 package qobuz
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"os"
+	"music-server/utils"
 	"strconv"
 
-	"github.com/go-flac/go-flac/v2"
 	"github.com/opensaucerer/goaxios"
 )
 
@@ -25,7 +22,7 @@ type SquidDLResult struct {
 	} `json:"data"`
 }
 
-func dabDownload(id int, quality string) (string, error) {
+func dabDownload(id int, quality string, path string) error {
 	request := goaxios.GoAxios{
 		Url: DAB_API_URL + "stream",
 		Query: map[string]string{
@@ -42,15 +39,20 @@ func dabDownload(id int, quality string) (string, error) {
 	res := request.RunRest()
 
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
+		return fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
 	result, _ := res.Body.(*DabDLResult)
-	return result.Url, nil
 
+	err := utils.DownloadAndCheckTime(path, result.Url)
+	if err != nil {
+		return fmt.Errorf("error downloading and checking file: %w", err)
+	}
+
+	return nil
 }
 
-func squidDownload(id int, quality string) (string, error) {
+func squidDownload(id int, quality string, path string) error {
 	request := goaxios.GoAxios{
 		Url: SQUID_API_URL + "download-music",
 		Query: map[string]string{
@@ -67,74 +69,31 @@ func squidDownload(id int, quality string) (string, error) {
 	res := request.RunRest()
 
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return "", fmt.Errorf("error fetching download URL: %w", res.Error)
+		return fmt.Errorf("error fetching download URL: %w", res.Error)
 	}
 
 	result, _ := res.Body.(*SquidDLResult)
 
 	if !result.Success {
-		return "", fmt.Errorf("failed to fetch download URL: %s", string(res.Bytes))
+		return fmt.Errorf("failed to fetch download URL: %s", string(res.Bytes))
 	}
 
-	return result.Data.Url, nil
+	err := utils.DownloadAndCheckTime(path, result.Data.Url)
+	if err != nil {
+		return fmt.Errorf("error downloading and checking file: %w", err)
+	}
+
+	return nil
 }
 
 func Download(id int, quality string, path string) error {
 
-	var url string
-	var err error
-
-	url, err = squidDownload(id, quality)
+	err := squidDownload(id, quality, path)
 	if err != nil {
-		url, err = dabDownload(id, quality)
+		err = dabDownload(id, quality, path)
 		if err != nil {
 			return fmt.Errorf("error downloading track: %w", err)
 		}
-	}
-
-	request := goaxios.GoAxios{
-		Url:    url,
-		Method: "GET",
-		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
-		},
-	}
-
-	res := request.RunRest()
-	if res.Error != nil {
-		return res.Error
-	}
-
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	reader := bytes.NewReader(res.Bytes)
-
-	_, err = io.Copy(file, reader)
-	if err != nil {
-		return err
-	}
-
-	f, err := flac.ParseFile(path)
-	if err != nil {
-		os.Remove(path)
-		return fmt.Errorf("error parsing FLAC file: %w", err)
-	}
-	defer f.Close()
-
-	data, err := f.GetStreamInfo()
-	if err != nil {
-		os.Remove(path)
-		return fmt.Errorf("error getting stream info: %w", err)
-	}
-
-	time := data.SampleCount / int64(data.SampleRate)
-	if time == 30 {
-		os.Remove(path)
-		return fmt.Errorf("track duration is 30 seconds, which means it's probably a preview or not available in full length")
 	}
 
 	return nil
