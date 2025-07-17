@@ -130,7 +130,7 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
-	fmt.Println(temp_results)
+	fmt.Println(res.Body)
 
 	var tracks []db.Track
 	var album db.Album
