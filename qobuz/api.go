@@ -113,10 +113,8 @@ func GetAlbum(id int) (db.Album, error) {
 	request := goaxios.GoAxios{
 		Url: API_URL + "album/get",
 		Query: map[string]string{
-			"album_id": strconv.Itoa(id),
-			"offset":   "0",
-			"limit":    "50",
 			"app_id":   "798273057",
+			"album_id": strconv.Itoa(id),
 		},
 		Method: "GET",
 		Headers: map[string]string{
