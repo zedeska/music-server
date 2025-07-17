@@ -1,5 +1,7 @@
 package db
 
+import "encoding/json"
+
 type Track struct {
 	ID         int     `json:"id"`
 	Title      string  `json:"title"`
@@ -12,4 +14,20 @@ type Track struct {
 	Cover      string  `json:"cover"`
 	SampleRate float32 `json:"sample_rate"`
 	Bitrate    int     `json:"bitrate"`
+}
+
+type Album struct {
+	ID         int     `json:"id"`
+	Title      string  `json:"title"`
+	Artist     string  `json:"artist"`
+	Year       int     `json:"year"`
+	Cover      string  `json:"cover"`
+	Tracks     []Track `json:"tracks"`
+	SampleRate float32 `json:"sample_rate"`
+	Bitrate    int     `json:"bitrate"`
+}
+
+func (p *Album) ToJSON() []byte {
+	data, _ := json.Marshal(p)
+	return data
 }

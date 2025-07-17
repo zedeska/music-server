@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	db "music-server/database"
 	"music-server/qobuz"
@@ -11,22 +10,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 )
 
 var SONG_FOLDER string
-
-type custom_search_result struct {
-	Tracks []db.Track `json:"tracks"`
-}
-
-func (p custom_search_result) ToJSON() []byte {
-	data, err := json.Marshal(p)
-	if err != nil {
-		return nil
-	}
-	return data
-}
 
 func main() {
 
@@ -42,6 +28,7 @@ func main() {
 	http.HandleFunc("/search", searchHandler)
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/register", RegisterHandler)
+	http.HandleFunc("/album", getAlbumHandler)
 	http.ListenAndServe(":8488", nil)
 
 }
@@ -145,25 +132,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	temp_results, err := qobuz.Search(query)
+	results, err := qobuz.Search(query)
 	if err != nil {
 		http.Error(w, "Invalid search query", http.StatusBadRequest)
 		return
-	}
-
-	var results custom_search_result
-
-	for _, track := range temp_results.Tracks.Items {
-		results.Tracks = append(results.Tracks, db.Track{
-			ID:         track.ID,
-			Title:      track.Title,
-			Artist:     track.Performer.Name,
-			Album:      track.Album.Title,
-			Duration:   track.Duration,
-			Cover:      track.Album.Image.Large,
-			Bitrate:    track.MaximumBitDepth,
-			SampleRate: float32(track.MaximumSamplingRate),
-		})
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -171,38 +143,50 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(results.ToJSON())
 }
 
+func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+
+	if idStr == "" {
+		http.Error(w, "Missing album ID", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid album ID", http.StatusBadRequest)
+		return
+	}
+
+	album, err := qobuz.GetAlbum(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(album.ToJSON())
+}
+
 func play(id int) (string, error) {
 	if !db.CheckIfTrackExists(id) {
-		qobuzTrack := qobuz.GetTrack(id)
-		if qobuzTrack == nil {
-			return "", errors.New("Track not found")
+		qobuzTrack, err := qobuz.GetTrack(id)
+		if err != nil {
+			return "", err
 		}
 
 		file_name := utils.RandomString(50)
 		file_path := filepath.Join(SONG_FOLDER, file_name)
 
-		err := qobuz.Download(qobuzTrack.ID, "27", file_path)
+		err = qobuz.Download(qobuzTrack.ID, "27", file_path)
 		if err != nil {
 			return "", err
 		}
 
-		year, _ := strconv.Atoi(strings.Split(qobuzTrack.ReleaseDateOriginal, "-")[0])
+		qobuzTrack.Path = file_path
+		qobuzTrack.Filename = file_name
 
-		track := &db.Track{
-			ID:         qobuzTrack.ID,
-			Title:      qobuzTrack.Title,
-			Path:       file_path,
-			Filename:   file_name,
-			Year:       year,
-			Artist:     qobuzTrack.Performer.Name,
-			Album:      qobuzTrack.Album.Title,
-			Duration:   qobuzTrack.Duration,
-			Cover:      qobuzTrack.Album.Image.Large,
-			Bitrate:    qobuzTrack.MaximumBitDepth,
-			SampleRate: qobuzTrack.MaximumSamplingRate,
-		}
-
-		err = db.AddTrack(*track)
+		err = db.AddTrack(*qobuzTrack)
 		if err != nil {
 			return "", err
 		}
