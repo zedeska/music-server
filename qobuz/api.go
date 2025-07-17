@@ -126,8 +126,9 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 
 	res := request.RunRest()
+	fmt.Println(res.Body)
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return db.Album{}, errors.New("Error fetching album: " + res.Error.Error())
+		return db.Album{}, errors.New("Error fetching album")
 	}
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
