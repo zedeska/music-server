@@ -130,6 +130,7 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 	fmt.Println(res.Body)
 	fmt.Println(res.Response.StatusCode)
+	fmt.Println("AOIUHFOUDHFGDISUGBSIGB")
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
 
