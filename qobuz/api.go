@@ -95,16 +95,16 @@ func GetTrack(id int) (db.Track, error) {
 	year, _ := strconv.Atoi(strings.Split(temp_results.ReleaseDateOriginal, "-")[0])
 
 	var track db.Track = db.Track{
-		ID:         temp_results.ID,
-		Title:      temp_results.Title,
-		Artist:     temp_results.Performer.Name,
-		Album:      temp_results.Album.Title,
-		Duration:   temp_results.Duration,
-		Year:       year,
-		Cover:      temp_results.Album.Image.Large,
-		Bitrate:    temp_results.MaximumBitDepth,
-		SampleRate: float32(temp_results.MaximumSamplingRate),
-		MediaCount: temp_results.MediaNumber,
+		ID:          temp_results.ID,
+		Title:       temp_results.Title,
+		Artist:      temp_results.Performer.Name,
+		Album:       temp_results.Album.Title,
+		Duration:    temp_results.Duration,
+		Year:        year,
+		Cover:       temp_results.Album.Image.Large,
+		Bitrate:     temp_results.MaximumBitDepth,
+		SampleRate:  float32(temp_results.MaximumSamplingRate),
+		TrackNumber: temp_results.TrackNumber,
 	}
 
 	return track, nil
@@ -136,15 +136,15 @@ func GetAlbum(id string) (db.Album, error) {
 
 	for _, track := range temp_results.Tracks.Items {
 		tracks = append(tracks, db.Track{
-			ID:         track.ID,
-			Title:      track.Title,
-			Artist:     track.Performer.Name,
-			Album:      temp_results.Title,
-			Duration:   track.Duration,
-			Cover:      temp_results.Image.Small,
-			Bitrate:    track.MaximumBitDepth,
-			SampleRate: float32(track.MaximumSamplingRate),
-			MediaCount: track.MediaNumber,
+			ID:          track.ID,
+			Title:       track.Title,
+			Artist:      track.Performer.Name,
+			Album:       temp_results.Title,
+			Duration:    track.Duration,
+			Cover:       temp_results.Image.Small,
+			Bitrate:     track.MaximumBitDepth,
+			SampleRate:  float32(track.MaximumSamplingRate),
+			TrackNumber: track.TrackNumber,
 		})
 	}
 
