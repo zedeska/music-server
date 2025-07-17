@@ -155,7 +155,7 @@ func GetAlbum(id string) (db.Album, error) {
 		Bitrate:    temp_results.MaximumBitDepth,
 		SampleRate: float32(temp_results.MaximumSamplingRate),
 		Tracks:     tracks,
-		MediaCount: temp_results.MediaCount,
+		TrackCount: temp_results.TracksCount,
 	}
 
 	return album, nil

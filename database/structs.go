@@ -25,7 +25,7 @@ type Album struct {
 	Tracks     []Track `json:"tracks"`
 	SampleRate float32 `json:"sample_rate"`
 	Bitrate    int     `json:"bitrate"`
-	MediaCount int     `json:"media_count"`
+	TrackCount int     `json:"track_count"`
 }
 
 func (p *Album) ToJSON() []byte {
