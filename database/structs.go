@@ -17,7 +17,7 @@ type Track struct {
 }
 
 type Album struct {
-	ID         int     `json:"id"`
+	ID         string  `json:"id"`
 	Title      string  `json:"title"`
 	Artist     string  `json:"artist"`
 	Year       int     `json:"year"`

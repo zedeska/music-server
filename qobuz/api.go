@@ -56,9 +56,8 @@ func Search(query string) (custom_search_result, error) {
 	}
 
 	for _, album := range temp_results.Albums.Items {
-		albumID, _ := strconv.Atoi(album.ID)
 		results.Albums = append(results.Albums, db.Album{
-			ID:         albumID,
+			ID:         album.ID,
 			Title:      album.Title,
 			Artist:     album.Artist.Name,
 			Year:       album.ReleasedAt,
@@ -110,12 +109,11 @@ func GetTrack(id int) (db.Track, error) {
 	return track, nil
 }
 
-func GetAlbum(id int) (db.Album, error) {
+func GetAlbum(id string) (db.Album, error) {
 	request := goaxios.GoAxios{
 		Url: API_URL + "album/get",
 		Query: map[string]string{
-			"app_id":   "798273057",
-			"album_id": strconv.Itoa(id),
+			"album_id": id,
 		},
 		Method: "GET",
 		Headers: map[string]string{
@@ -126,7 +124,6 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Response.Request.URL)
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Album{}, errors.New("Error fetching album")
 	}
@@ -149,9 +146,8 @@ func GetAlbum(id int) (db.Album, error) {
 		})
 	}
 
-	albumID, _ := strconv.Atoi(temp_results.ID)
 	album = db.Album{
-		ID:         albumID,
+		ID:         temp_results.ID,
 		Title:      temp_results.Title,
 		Artist:     temp_results.Artist.Name,
 		Year:       temp_results.ReleasedAt,
