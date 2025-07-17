@@ -128,9 +128,10 @@ func GetAlbum(id int) (db.Album, error) {
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Album{}, res.Error
 	}
+	fmt.Println(res.Body)
+	fmt.Println(res.Response.StatusCode)
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
-	fmt.Println(res.Body)
 
 	var tracks []db.Track
 	var album db.Album
