@@ -14,6 +14,7 @@ type Track struct {
 	Cover      string  `json:"cover"`
 	SampleRate float32 `json:"sample_rate"`
 	Bitrate    int     `json:"bitrate"`
+	MediaCount int     `json:"media_count"`
 }
 
 type Album struct {

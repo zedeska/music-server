@@ -104,6 +104,7 @@ func GetTrack(id int) (db.Track, error) {
 		Cover:      temp_results.Album.Image.Large,
 		Bitrate:    temp_results.MaximumBitDepth,
 		SampleRate: float32(temp_results.MaximumSamplingRate),
+		MediaCount: temp_results.MediaNumber,
 	}
 
 	return track, nil
@@ -143,6 +144,7 @@ func GetAlbum(id string) (db.Album, error) {
 			Cover:      temp_results.Image.Small,
 			Bitrate:    track.MaximumBitDepth,
 			SampleRate: float32(track.MaximumSamplingRate),
+			MediaCount: track.MediaNumber,
 		})
 	}
 
