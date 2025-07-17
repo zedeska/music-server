@@ -56,8 +56,9 @@ func Search(query string) (custom_search_result, error) {
 	}
 
 	for _, album := range temp_results.Albums.Items {
+		albumID, _ := strconv.Atoi(album.ID)
 		results.Albums = append(results.Albums, db.Album{
-			ID:         album.QobuzID,
+			ID:         albumID,
 			Title:      album.Title,
 			Artist:     album.Artist.Name,
 			Year:       album.ReleasedAt,
@@ -125,6 +126,7 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 
 	res := request.RunRest()
+	fmt.Println(res.Response.Request.URL)
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Album{}, errors.New("Error fetching album")
 	}
@@ -147,8 +149,9 @@ func GetAlbum(id int) (db.Album, error) {
 		})
 	}
 
+	albumID, _ := strconv.Atoi(temp_results.ID)
 	album = db.Album{
-		ID:         temp_results.QobuzID,
+		ID:         albumID,
 		Title:      temp_results.Title,
 		Artist:     temp_results.Artist.Name,
 		Year:       temp_results.ReleasedAt,
