@@ -116,6 +116,7 @@ func GetAlbum(id int) (db.Album, error) {
 			"album_id": strconv.Itoa(id),
 			"offset":   "0",
 			"limit":    "50",
+			"app_id":   "798273057",
 		},
 		Method: "GET",
 		Headers: map[string]string{
@@ -126,7 +127,6 @@ func GetAlbum(id int) (db.Album, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Body)
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Album{}, errors.New("Error fetching album")
 	}
