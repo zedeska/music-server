@@ -70,7 +70,7 @@ func Search(query string) (custom_search_result, error) {
 
 }
 
-func GetTrack(id int) (*db.Track, error) {
+func GetTrack(id int) (db.Track, error) {
 	request := goaxios.GoAxios{
 		Url: API_URL + "track/get",
 		Query: map[string]string{
@@ -86,7 +86,7 @@ func GetTrack(id int) (*db.Track, error) {
 
 	res := request.RunRest()
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return nil, res.Error
+		return db.Track{}, res.Error
 	}
 
 	temp_results, _ := res.Body.(*QobuzTrack)
@@ -105,10 +105,10 @@ func GetTrack(id int) (*db.Track, error) {
 		SampleRate: float32(temp_results.MaximumSamplingRate),
 	}
 
-	return &track, nil
+	return track, nil
 }
 
-func GetAlbum(id int) (*db.Album, error) {
+func GetAlbum(id int) (db.Album, error) {
 	request := goaxios.GoAxios{
 		Url: API_URL + "album/get",
 		Query: map[string]string{
@@ -126,7 +126,7 @@ func GetAlbum(id int) (*db.Album, error) {
 
 	res := request.RunRest()
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return nil, res.Error
+		return db.Album{}, res.Error
 	}
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
@@ -158,5 +158,5 @@ func GetAlbum(id int) (*db.Album, error) {
 		Tracks:     tracks,
 	}
 
-	return &album, nil
+	return album, nil
 }

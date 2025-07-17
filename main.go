@@ -186,7 +186,7 @@ func play(id int) (string, error) {
 		qobuzTrack.Path = file_path
 		qobuzTrack.Filename = file_name
 
-		err = db.AddTrack(*qobuzTrack)
+		err = db.AddTrack(qobuzTrack)
 		if err != nil {
 			return "", err
 		}
