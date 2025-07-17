@@ -163,9 +163,6 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(album)
-	fmt.Println(id)
-
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(album.ToJSON())

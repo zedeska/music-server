@@ -1,6 +1,7 @@
 package qobuz
 
 import (
+	"errors"
 	"fmt"
 	db "music-server/database"
 	"strconv"
@@ -126,11 +127,8 @@ func GetAlbum(id int) (db.Album, error) {
 
 	res := request.RunRest()
 	if res.Error != nil || res.Response.StatusCode != 200 {
-		return db.Album{}, res.Error
+		return db.Album{}, errors.New("Error fetching album: " + res.Error.Error())
 	}
-	fmt.Println(res.Body)
-	fmt.Println(res.Response.StatusCode)
-	fmt.Println("AOIUHFOUDHFGDISUGBSIGB")
 
 	temp_results, _ := res.Body.(*QobuzAlbum)
 
