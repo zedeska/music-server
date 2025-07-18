@@ -489,29 +489,29 @@ type QobuzTrack struct {
 			ID    int    `json:"id"`
 			Slug  string `json:"slug"`
 		} `json:"genre"`
-		MaximumChannelCount int    `json:"maximum_channel_count"`
-		ID                  string `json:"id"`
-		MaximumSamplingRate int    `json:"maximum_sampling_rate"`
-		Articles            []any  `json:"articles"`
-		ReleaseDateOriginal string `json:"release_date_original"`
-		ReleaseDateDownload string `json:"release_date_download"`
-		ReleaseDateStream   string `json:"release_date_stream"`
-		Purchasable         bool   `json:"purchasable"`
-		Streamable          bool   `json:"streamable"`
-		Previewable         bool   `json:"previewable"`
-		Sampleable          bool   `json:"sampleable"`
-		Downloadable        bool   `json:"downloadable"`
-		Displayable         bool   `json:"displayable"`
-		PurchasableAt       int    `json:"purchasable_at"`
-		StreamableAt        int    `json:"streamable_at"`
-		Hires               bool   `json:"hires"`
-		HiresStreamable     bool   `json:"hires_streamable"`
-		Awards              []any  `json:"awards"`
-		Description         string `json:"description"`
-		DescriptionLanguage string `json:"description_language"`
-		Goodies             []any  `json:"goodies"`
-		Area                any    `json:"area"`
-		Catchline           string `json:"catchline"`
+		MaximumChannelCount int     `json:"maximum_channel_count"`
+		ID                  string  `json:"id"`
+		MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
+		Articles            []any   `json:"articles"`
+		ReleaseDateOriginal string  `json:"release_date_original"`
+		ReleaseDateDownload string  `json:"release_date_download"`
+		ReleaseDateStream   string  `json:"release_date_stream"`
+		Purchasable         bool    `json:"purchasable"`
+		Streamable          bool    `json:"streamable"`
+		Previewable         bool    `json:"previewable"`
+		Sampleable          bool    `json:"sampleable"`
+		Downloadable        bool    `json:"downloadable"`
+		Displayable         bool    `json:"displayable"`
+		PurchasableAt       int     `json:"purchasable_at"`
+		StreamableAt        int     `json:"streamable_at"`
+		Hires               bool    `json:"hires"`
+		HiresStreamable     bool    `json:"hires_streamable"`
+		Awards              []any   `json:"awards"`
+		Description         string  `json:"description"`
+		DescriptionLanguage string  `json:"description_language"`
+		Goodies             []any   `json:"goodies"`
+		Area                any     `json:"area"`
+		Catchline           string  `json:"catchline"`
 		Composer            struct {
 			ID          int    `json:"id"`
 			Name        string `json:"name"`

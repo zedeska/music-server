@@ -168,7 +168,6 @@ func play(id int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Println(qobuzTrack.Title)
 
 		file_name := utils.RandomString(50)
 		file_path := filepath.Join(SONG_FOLDER, file_name)
