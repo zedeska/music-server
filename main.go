@@ -153,7 +153,7 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 
 	album, err := qobuz.GetAlbum(idStr)
 	if err != nil {
-		http.Error(w, "Error fetching album", http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
