@@ -60,7 +60,7 @@ type qobuz_search_result struct {
 			} `json:"genre"`
 			MaximumChannelCount int     `json:"maximum_channel_count"`
 			ID                  string  `json:"id"`
-			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+			MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
 			Articles            []any   `json:"articles"`
 			ReleaseDateOriginal string  `json:"release_date_original"`
 			ReleaseDateDownload string  `json:"release_date_download"`
@@ -134,7 +134,7 @@ type qobuz_search_result struct {
 				} `json:"genre"`
 				MaximumChannelCount int     `json:"maximum_channel_count"`
 				ID                  string  `json:"id"`
-				MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+				MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
 				Previewable         bool    `json:"previewable"`
 				Sampleable          bool    `json:"sampleable"`
 				Displayable         bool    `json:"displayable"`
@@ -164,7 +164,7 @@ type qobuz_search_result struct {
 			MaximumChannelCount int     `json:"maximum_channel_count"`
 			ID                  int     `json:"id"`
 			MediaNumber         int     `json:"media_number"`
-			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+			MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
 			ReleaseDateOriginal string  `json:"release_date_original"`
 			ReleaseDateDownload string  `json:"release_date_download"`
 			ReleaseDateStream   string  `json:"release_date_stream"`
@@ -336,7 +336,7 @@ type QobuzAlbum struct {
 	} `json:"genre"`
 	MaximumChannelCount int     `json:"maximum_channel_count"`
 	ID                  string  `json:"id"`
-	MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+	MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
 	Articles            []any   `json:"articles"`
 	ReleaseDateOriginal string  `json:"release_date_original"`
 	ReleaseDateDownload string  `json:"release_date_download"`
@@ -412,7 +412,7 @@ type QobuzAlbum struct {
 			MaximumChannelCount int     `json:"maximum_channel_count"`
 			ID                  int     `json:"id"`
 			MediaNumber         int     `json:"media_number"`
-			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+			MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
 			ReleaseDateOriginal string  `json:"release_date_original"`
 			ReleaseDateDownload string  `json:"release_date_download"`
 			ReleaseDateStream   string  `json:"release_date_stream"`
@@ -543,29 +543,29 @@ type QobuzTrack struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"composer"`
-	Isrc                string `json:"isrc"`
-	Title               string `json:"title"`
-	Version             any    `json:"version"`
-	Duration            int    `json:"duration"`
-	ParentalWarning     bool   `json:"parental_warning"`
-	TrackNumber         int    `json:"track_number"`
-	MaximumChannelCount int    `json:"maximum_channel_count"`
-	ID                  int    `json:"id"`
-	MediaNumber         int    `json:"media_number"`
-	MaximumSamplingRate int    `json:"maximum_sampling_rate"`
-	Articles            []any  `json:"articles"`
-	ReleaseDateOriginal string `json:"release_date_original"`
-	ReleaseDateDownload string `json:"release_date_download"`
-	ReleaseDateStream   string `json:"release_date_stream"`
-	ReleaseDatePurchase string `json:"release_date_purchase"`
-	Purchasable         bool   `json:"purchasable"`
-	Streamable          bool   `json:"streamable"`
-	Previewable         bool   `json:"previewable"`
-	Sampleable          bool   `json:"sampleable"`
-	Downloadable        bool   `json:"downloadable"`
-	Displayable         bool   `json:"displayable"`
-	PurchasableAt       int    `json:"purchasable_at"`
-	StreamableAt        int    `json:"streamable_at"`
-	Hires               bool   `json:"hires"`
-	HiresStreamable     bool   `json:"hires_streamable"`
+	Isrc                string  `json:"isrc"`
+	Title               string  `json:"title"`
+	Version             any     `json:"version"`
+	Duration            int     `json:"duration"`
+	ParentalWarning     bool    `json:"parental_warning"`
+	TrackNumber         int     `json:"track_number"`
+	MaximumChannelCount int     `json:"maximum_channel_count"`
+	ID                  int     `json:"id"`
+	MediaNumber         int     `json:"media_number"`
+	MaximumSamplingRate float32 `json:"maximum_sampling_rate"`
+	Articles            []any   `json:"articles"`
+	ReleaseDateOriginal string  `json:"release_date_original"`
+	ReleaseDateDownload string  `json:"release_date_download"`
+	ReleaseDateStream   string  `json:"release_date_stream"`
+	ReleaseDatePurchase string  `json:"release_date_purchase"`
+	Purchasable         bool    `json:"purchasable"`
+	Streamable          bool    `json:"streamable"`
+	Previewable         bool    `json:"previewable"`
+	Sampleable          bool    `json:"sampleable"`
+	Downloadable        bool    `json:"downloadable"`
+	Displayable         bool    `json:"displayable"`
+	PurchasableAt       int     `json:"purchasable_at"`
+	StreamableAt        int     `json:"streamable_at"`
+	Hires               bool    `json:"hires"`
+	HiresStreamable     bool    `json:"hires_streamable"`
 }
