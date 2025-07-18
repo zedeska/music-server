@@ -125,8 +125,6 @@ func GetAlbum(id string) (db.Album, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Body)
-	fmt.Println(res.Response.StatusCode)
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Album{}, errors.New("Error fetching album")
 	}
