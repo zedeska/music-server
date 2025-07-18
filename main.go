@@ -13,6 +13,7 @@ import (
 )
 
 var SONG_FOLDER string
+var MAX_QUALITY string = "6"
 
 func main() {
 
@@ -172,9 +173,14 @@ func play(id int) (string, error) {
 		file_name := utils.RandomString(50)
 		file_path := filepath.Join(SONG_FOLDER, file_name)
 
-		err = qobuz.Download(qobuzTrack.ID, "27", file_path)
+		err = qobuz.Download(qobuzTrack.ID, MAX_QUALITY, file_path)
 		if err != nil {
 			return "", err
+		}
+
+		if MAX_QUALITY == "6" {
+			qobuzTrack.SampleRate = 44.1
+			qobuzTrack.Bitrate = 16
 		}
 
 		qobuzTrack.Path = file_path
