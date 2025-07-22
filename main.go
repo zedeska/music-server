@@ -30,8 +30,43 @@ func main() {
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/album", getAlbumHandler)
+	http.HandleFunc("/listened", listenedHandler)
 	http.ListenAndServe(":8488", nil)
 
+}
+
+func listenedHandler(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Missing authentication token", http.StatusUnauthorized)
+		return
+	}
+	limitStr := r.URL.Query().Get("limit")
+	if limitStr == "" {
+		limitStr = "10" // Default limit if not specified
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		http.Error(w, "Invalid limit parameter", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Fetch listened tracks for the user
+	listenedTracks, err := db.GetListenedTracks(userID, limit)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(listenedTracks)
 }
 
 func playHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +104,13 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	userId, err := db.GetUserID(token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = db.AddToListen(userId, id)
 
 	w.Header().Add("Content-Type", "audio/flac")
 

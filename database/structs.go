@@ -33,3 +33,8 @@ func (p *Album) ToJSON() []byte {
 	data, _ := json.Marshal(p)
 	return data
 }
+
+func (p *Track) ToJSON() []byte {
+	data, _ := json.Marshal(p)
+	return data
+}

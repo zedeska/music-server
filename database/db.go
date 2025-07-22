@@ -7,6 +7,7 @@ import (
 	"log"
 	"music-server/utils"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -51,6 +52,15 @@ func InitDB() {
 			id_user INTEGER,
 			name VARCHAR(50),
 			FOREIGN KEY (id_user) REFERENCES user(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS listened (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id_user INTEGER,
+			id_track INTEGER,
+			timestamp INTEGER,
+			FOREIGN KEY (id_user) REFERENCES user(id_user),
+			FOREIGN KEY (id_track) REFERENCES track(id)
 		);
 
 		COMMIT;
@@ -184,4 +194,64 @@ func CheckToken(token string) (bool, error) {
 	}
 
 	return exists > 0, nil
+}
+
+func AddToListen(userID, trackID int) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO listened (id_user, id_track, timestamp) VALUES (?, ?, ?)", userID, trackID, time.Now().Unix())
+	if err != nil {
+		return fmt.Errorf("failed to insert listened record: %w", err)
+	}
+
+	return nil
+}
+
+func GetUserID(token string) (int, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return 0, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	var userID int
+	err = db.QueryRow("SELECT id_user FROM user WHERE token = ?", token).Scan(&userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return userID, nil
+}
+
+func GetListenedTracks(userID, limit int) ([]byte, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT t.id, t.title, t.path, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var tracks []byte
+	for rows.Next() {
+		var track Track
+		if err := rows.Scan(&track.ID, &track.Title, &track.Path, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		tracks = append(tracks, track.ToJSON()...)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return tracks, nil
 }
