@@ -235,7 +235,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT t.id, t.title, t.path, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
+	rows, err := db.Query("SELECT t.id, t.title, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -247,7 +247,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 
 	for rows.Next() {
 		var track Track
-		if err := rows.Scan(&track.ID, &track.Title, &track.Path, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
+		if err := rows.Scan(&track.ID, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		tracks.Data = append(tracks.Data, track)
