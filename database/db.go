@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -240,18 +241,23 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 	defer rows.Close()
 
-	var tracks []byte
+	var tracks []Track
 	for rows.Next() {
 		var track Track
 		if err := rows.Scan(&track.ID, &track.Title, &track.Path, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
-		tracks = append(tracks, track.ToJSON()...)
+		tracks = append(tracks, track)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over rows: %w", err)
 	}
 
-	return tracks, nil
+	data, err := json.Marshal(tracks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal tracks: %w", err)
+	}
+
+	return data, nil
 }
