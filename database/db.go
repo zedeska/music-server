@@ -241,13 +241,16 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 	defer rows.Close()
 
-	var tracks []Track
+	var tracks struct {
+		Data []Track `json:"data"`
+	}
+
 	for rows.Next() {
 		var track Track
 		if err := rows.Scan(&track.ID, &track.Title, &track.Path, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
-		tracks = append(tracks, track)
+		tracks.Data = append(tracks.Data, track)
 	}
 
 	if err := rows.Err(); err != nil {
