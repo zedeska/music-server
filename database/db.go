@@ -235,7 +235,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT t.id, t.title, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
+	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
