@@ -30,9 +30,28 @@ func main() {
 	http.HandleFunc("/login", LoginHandler)
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/album", getAlbumHandler)
+	http.HandleFunc("/artist", artistHandler)
 	http.HandleFunc("/listened", listenedHandler)
 	http.ListenAndServe(":8488", nil)
 
+}
+
+func artistHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "Missing artist ID", http.StatusBadRequest)
+		return
+	}
+
+	artist, err := qobuz.GetArtist(idStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(artist.ToJSON())
 }
 
 func listenedHandler(w http.ResponseWriter, r *http.Request) {
