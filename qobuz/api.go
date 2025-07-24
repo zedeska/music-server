@@ -180,7 +180,6 @@ func GetArtist(id string) (db.Artist, error) {
 	}
 
 	res := request.RunRest()
-	fmt.Println(res.Body)
 	if res.Error != nil || res.Response.StatusCode != 200 {
 		return db.Artist{}, errors.New("Error fetching artist")
 	}

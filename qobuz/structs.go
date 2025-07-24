@@ -624,9 +624,9 @@ type QobuzArtist struct {
 		} `json:"artist"`
 		Artists   []any `json:"artists"`
 		AudioInfo struct {
-			MaximumBitDepth     int `json:"maximum_bit_depth"`
-			MaximumChannelCount int `json:"maximum_channel_count"`
-			MaximumSamplingRate int `json:"maximum_sampling_rate"`
+			MaximumBitDepth     int     `json:"maximum_bit_depth"`
+			MaximumChannelCount int     `json:"maximum_channel_count"`
+			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
 		} `json:"audio_info"`
 		Rights struct {
 			Streamable       bool `json:"streamable"`
@@ -661,60 +661,8 @@ type QobuzArtist struct {
 			} `json:"genre"`
 		} `json:"album"`
 	} `json:"top_tracks"`
-	LastRelease struct {
-		ID          string `json:"id"`
-		Title       string `json:"title"`
-		Version     any    `json:"version"`
-		TracksCount int    `json:"tracks_count"`
-		Artist      struct {
-			ID   int `json:"id"`
-			Name struct {
-				Display string `json:"display"`
-			} `json:"name"`
-		} `json:"artist"`
-		Artists []struct {
-			ID    int      `json:"id"`
-			Name  string   `json:"name"`
-			Roles []string `json:"roles"`
-		} `json:"artists"`
-		Image struct {
-			Small     string `json:"small"`
-			Thumbnail string `json:"thumbnail"`
-			Large     string `json:"large"`
-		} `json:"image"`
-		Label struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"label"`
-		Genre struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-			Path []int  `json:"path"`
-		} `json:"genre"`
-		ReleaseType string `json:"release_type"`
-		ReleaseTags []any  `json:"release_tags"`
-		Duration    int    `json:"duration"`
-		Dates       struct {
-			Download string `json:"download"`
-			Original string `json:"original"`
-			Stream   string `json:"stream"`
-		} `json:"dates"`
-		ParentalWarning bool `json:"parental_warning"`
-		AudioInfo       struct {
-			MaximumBitDepth     int     `json:"maximum_bit_depth"`
-			MaximumChannelCount int     `json:"maximum_channel_count"`
-			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
-		} `json:"audio_info"`
-		Rights struct {
-			Purchasable      bool `json:"purchasable"`
-			Streamable       bool `json:"streamable"`
-			Downloadable     bool `json:"downloadable"`
-			HiresStreamable  bool `json:"hires_streamable"`
-			HiresPurchasable bool `json:"hires_purchasable"`
-		} `json:"rights"`
-		Description string `json:"description"`
-	} `json:"last_release"`
-	Releases []struct {
+	LastRelease any `json:"last_release"`
+	Releases    []struct {
 		Type    string `json:"type"`
 		HasMore bool   `json:"has_more"`
 		Items   []struct {
@@ -757,9 +705,9 @@ type QobuzArtist struct {
 			} `json:"dates"`
 			ParentalWarning bool `json:"parental_warning"`
 			AudioInfo       struct {
-				MaximumBitDepth     int `json:"maximum_bit_depth"`
-				MaximumChannelCount int `json:"maximum_channel_count"`
-				MaximumSamplingRate int `json:"maximum_sampling_rate"`
+				MaximumBitDepth     int     `json:"maximum_bit_depth"`
+				MaximumChannelCount int     `json:"maximum_channel_count"`
+				MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
 			} `json:"audio_info"`
 			Rights struct {
 				Purchasable      bool `json:"purchasable"`
@@ -775,7 +723,7 @@ type QobuzArtist struct {
 		Isrc            string `json:"isrc"`
 		Title           string `json:"title"`
 		Work            any    `json:"work"`
-		Version         string `json:"version"`
+		Version         any    `json:"version"`
 		Duration        int    `json:"duration"`
 		ParentalWarning bool   `json:"parental_warning"`
 		Composer        struct {
@@ -829,4 +777,8 @@ type QobuzArtist struct {
 			} `json:"genre"`
 		} `json:"album"`
 	} `json:"tracks_appears_on"`
+	Playlists struct {
+		HasMore bool  `json:"has_more"`
+		Items   []any `json:"items"`
+	} `json:"playlists"`
 }
