@@ -23,6 +23,7 @@ type Album struct {
 	ID         string  `json:"id"`
 	Title      string  `json:"title"`
 	Artist     string  `json:"artist"`
+	ArtistID   int     `json:"artist_id"`
 	Year       int     `json:"year"`
 	Cover      string  `json:"cover"`
 	Tracks     []Track `json:"tracks"`
@@ -45,6 +46,11 @@ func (p *Album) ToJSON() []byte {
 }
 
 func (p *Track) ToJSON() []byte {
+	data, _ := json.Marshal(p)
+	return data
+}
+
+func (p *Artist) ToJSON() []byte {
 	data, _ := json.Marshal(p)
 	return data
 }

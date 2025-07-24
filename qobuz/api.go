@@ -186,6 +186,7 @@ func GetArtist(id string) (db.Artist, error) {
 	temp_results, _ := res.Body.(*QobuzArtist)
 
 	var tracks []db.Track
+	var albums []db.Album
 
 	for _, track := range temp_results.TopTracks {
 		tracks = append(tracks, db.Track{
@@ -200,13 +201,24 @@ func GetArtist(id string) (db.Artist, error) {
 		})
 	}
 
+	for _, album := range temp_results.Releases[0].Items {
+		albums = append(albums, db.Album{
+			ID:       album.ID,
+			Title:    album.Title,
+			Artist:   album.Artist.Name.Display,
+			ArtistID: album.Artist.ID,
+			Cover:    album.Image.Large,
+		})
+	}
+
 	var image string = "https://static.qobuz.com/images/artists/covers/medium/" + temp_results.Images.Portrait.Hash + temp_results.Images.Portrait.Format
 
 	var artist db.Artist = db.Artist{
-		ID:        temp_results.ID,
-		Name:      temp_results.Name.Display,
-		Image:     image,
-		TopTracks: tracks,
+		ID:          temp_results.ID,
+		Name:        temp_results.Name.Display,
+		Image:       image,
+		TopTracks:   tracks,
+		LastRelease: albums,
 	}
 
 	return artist, nil
