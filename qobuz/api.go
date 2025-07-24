@@ -162,3 +162,52 @@ func GetAlbum(id string) (db.Album, error) {
 
 	return album, nil
 }
+
+func GetArtist(id string) (db.Artist, error) {
+	request := goaxios.GoAxios{
+		Url: API_URL + "artist/page",
+		Query: map[string]string{
+			"artist_id": id,
+			"sort":      "release_date",
+		},
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"X-App-Id":   "798273057",
+		},
+		ResponseStruct: &QobuzArtist{},
+	}
+
+	res := request.RunRest()
+	if res.Error != nil || res.Response.StatusCode != 200 {
+		return db.Artist{}, errors.New("Error fetching artist")
+	}
+
+	temp_results, _ := res.Body.(*QobuzArtist)
+
+	var tracks []db.Track
+
+	for _, track := range temp_results.TopTracks {
+		tracks = append(tracks, db.Track{
+			ID:       track.ID,
+			Title:    track.Title,
+			Artist:   track.Artist.Name.Display,
+			ArtistID: track.Artist.ID,
+			Album:    track.Album.Title,
+			AlbumID:  track.Album.ID,
+			Duration: track.Duration,
+			Cover:    track.Album.Image.Large,
+		})
+	}
+
+	var image string = "https://static.qobuz.com/images/artists/covers/medium/" + temp_results.Images.Portrait.Hash + temp_results.Images.Portrait.Format
+
+	var artist db.Artist = db.Artist{
+		ID:        temp_results.ID,
+		Name:      temp_results.Name.Display,
+		Image:     image,
+		TopTracks: tracks,
+	}
+
+	return artist, nil
+}

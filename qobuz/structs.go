@@ -569,3 +569,310 @@ type QobuzTrack struct {
 	Hires               bool    `json:"hires"`
 	HiresStreamable     bool    `json:"hires_streamable"`
 }
+
+type QobuzArtist struct {
+	ID   int `json:"id"`
+	Name struct {
+		Display string `json:"display"`
+	} `json:"name"`
+	ArtistCategory string `json:"artist_category"`
+	Biography      struct {
+		Content  string `json:"content"`
+		Source   any    `json:"source"`
+		Language string `json:"language"`
+	} `json:"biography"`
+	Images struct {
+		Portrait struct {
+			Hash   string `json:"hash"`
+			Format string `json:"format"`
+		} `json:"portrait"`
+	} `json:"images"`
+	SimilarArtists struct {
+		HasMore bool `json:"has_more"`
+		Items   []struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+			Images struct {
+				Portrait struct {
+					Hash   string `json:"hash"`
+					Format string `json:"format"`
+				} `json:"portrait"`
+			} `json:"images"`
+		} `json:"items"`
+	} `json:"similar_artists"`
+	TopTracks []struct {
+		ID              int    `json:"id"`
+		Isrc            string `json:"isrc"`
+		Title           string `json:"title"`
+		Work            any    `json:"work"`
+		Version         any    `json:"version"`
+		Duration        int    `json:"duration"`
+		ParentalWarning bool   `json:"parental_warning"`
+		Composer        struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+		} `json:"composer"`
+		Artist struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+		} `json:"artist"`
+		Artists   []any `json:"artists"`
+		AudioInfo struct {
+			MaximumBitDepth     int `json:"maximum_bit_depth"`
+			MaximumChannelCount int `json:"maximum_channel_count"`
+			MaximumSamplingRate int `json:"maximum_sampling_rate"`
+		} `json:"audio_info"`
+		Rights struct {
+			Streamable       bool `json:"streamable"`
+			HiresStreamable  bool `json:"hires_streamable"`
+			HiresPurchasable bool `json:"hires_purchasable"`
+			Purchasable      bool `json:"purchasable"`
+			Downloadable     bool `json:"downloadable"`
+			Previewable      bool `json:"previewable"`
+			Sampleable       bool `json:"sampleable"`
+		} `json:"rights"`
+		PhysicalSupport struct {
+			MediaNumber int `json:"media_number"`
+			TrackNumber int `json:"track_number"`
+		} `json:"physical_support"`
+		Album struct {
+			ID      string `json:"id"`
+			Title   string `json:"title"`
+			Version any    `json:"version"`
+			Image   struct {
+				Small     string `json:"small"`
+				Thumbnail string `json:"thumbnail"`
+				Large     string `json:"large"`
+			} `json:"image"`
+			Label struct {
+				Name string `json:"name"`
+				ID   int    `json:"id"`
+			} `json:"label"`
+			Genre struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+				Path []int  `json:"path"`
+			} `json:"genre"`
+		} `json:"album"`
+	} `json:"top_tracks"`
+	LastRelease struct {
+		ID          string `json:"id"`
+		Title       string `json:"title"`
+		Version     any    `json:"version"`
+		TracksCount int    `json:"tracks_count"`
+		Artist      struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+		} `json:"artist"`
+		Artists []struct {
+			ID    int      `json:"id"`
+			Name  string   `json:"name"`
+			Roles []string `json:"roles"`
+		} `json:"artists"`
+		Image struct {
+			Small     string `json:"small"`
+			Thumbnail string `json:"thumbnail"`
+			Large     string `json:"large"`
+		} `json:"image"`
+		Label struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+		} `json:"label"`
+		Genre struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+			Path []int  `json:"path"`
+		} `json:"genre"`
+		ReleaseType string `json:"release_type"`
+		ReleaseTags []any  `json:"release_tags"`
+		Duration    int    `json:"duration"`
+		Dates       struct {
+			Download string `json:"download"`
+			Original string `json:"original"`
+			Stream   string `json:"stream"`
+		} `json:"dates"`
+		ParentalWarning bool `json:"parental_warning"`
+		AudioInfo       struct {
+			MaximumBitDepth     int     `json:"maximum_bit_depth"`
+			MaximumChannelCount int     `json:"maximum_channel_count"`
+			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+		} `json:"audio_info"`
+		Rights struct {
+			Purchasable      bool `json:"purchasable"`
+			Streamable       bool `json:"streamable"`
+			Downloadable     bool `json:"downloadable"`
+			HiresStreamable  bool `json:"hires_streamable"`
+			HiresPurchasable bool `json:"hires_purchasable"`
+		} `json:"rights"`
+		Description string `json:"description"`
+	} `json:"last_release"`
+	Releases []struct {
+		Type    string `json:"type"`
+		HasMore bool   `json:"has_more"`
+		Items   []struct {
+			ID          string `json:"id"`
+			Title       string `json:"title"`
+			Version     any    `json:"version"`
+			TracksCount int    `json:"tracks_count"`
+			Artist      struct {
+				ID   int `json:"id"`
+				Name struct {
+					Display string `json:"display"`
+				} `json:"name"`
+			} `json:"artist"`
+			Artists []struct {
+				ID    int      `json:"id"`
+				Name  string   `json:"name"`
+				Roles []string `json:"roles"`
+			} `json:"artists"`
+			Image struct {
+				Small     string `json:"small"`
+				Thumbnail string `json:"thumbnail"`
+				Large     string `json:"large"`
+			} `json:"image"`
+			Label struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+			} `json:"label"`
+			Genre struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+				Path []int  `json:"path"`
+			} `json:"genre"`
+			ReleaseType string `json:"release_type"`
+			ReleaseTags []any  `json:"release_tags"`
+			Duration    int    `json:"duration"`
+			Dates       struct {
+				Download string `json:"download"`
+				Original string `json:"original"`
+				Stream   string `json:"stream"`
+			} `json:"dates"`
+			ParentalWarning bool `json:"parental_warning"`
+			AudioInfo       struct {
+				MaximumBitDepth     int `json:"maximum_bit_depth"`
+				MaximumChannelCount int `json:"maximum_channel_count"`
+				MaximumSamplingRate int `json:"maximum_sampling_rate"`
+			} `json:"audio_info"`
+			Rights struct {
+				Purchasable      bool `json:"purchasable"`
+				Streamable       bool `json:"streamable"`
+				Downloadable     bool `json:"downloadable"`
+				HiresStreamable  bool `json:"hires_streamable"`
+				HiresPurchasable bool `json:"hires_purchasable"`
+			} `json:"rights"`
+		} `json:"items"`
+	} `json:"releases"`
+	TracksAppearsOn []struct {
+		ID              int    `json:"id"`
+		Isrc            string `json:"isrc"`
+		Title           string `json:"title"`
+		Work            any    `json:"work"`
+		Version         string `json:"version"`
+		Duration        int    `json:"duration"`
+		ParentalWarning bool   `json:"parental_warning"`
+		Composer        struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+		} `json:"composer"`
+		Artist struct {
+			ID   int `json:"id"`
+			Name struct {
+				Display string `json:"display"`
+			} `json:"name"`
+		} `json:"artist"`
+		Artists   []any `json:"artists"`
+		AudioInfo struct {
+			MaximumBitDepth     int     `json:"maximum_bit_depth"`
+			MaximumChannelCount int     `json:"maximum_channel_count"`
+			MaximumSamplingRate float64 `json:"maximum_sampling_rate"`
+		} `json:"audio_info"`
+		Rights struct {
+			Streamable       bool `json:"streamable"`
+			HiresStreamable  bool `json:"hires_streamable"`
+			HiresPurchasable bool `json:"hires_purchasable"`
+			Purchasable      bool `json:"purchasable"`
+			Downloadable     bool `json:"downloadable"`
+			Previewable      bool `json:"previewable"`
+			Sampleable       bool `json:"sampleable"`
+		} `json:"rights"`
+		PhysicalSupport struct {
+			MediaNumber int `json:"media_number"`
+			TrackNumber int `json:"track_number"`
+		} `json:"physical_support"`
+		Album struct {
+			ID      string `json:"id"`
+			Title   string `json:"title"`
+			Version any    `json:"version"`
+			Image   struct {
+				Small     string `json:"small"`
+				Thumbnail string `json:"thumbnail"`
+				Large     string `json:"large"`
+			} `json:"image"`
+			Label struct {
+				Name string `json:"name"`
+				ID   int    `json:"id"`
+			} `json:"label"`
+			Genre struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+				Path []int  `json:"path"`
+			} `json:"genre"`
+		} `json:"album"`
+	} `json:"tracks_appears_on"`
+	Playlists struct {
+		HasMore bool `json:"has_more"`
+		Items   []struct {
+			ID          int    `json:"id"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
+			Owner       struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+			} `json:"owner"`
+			TracksCount int `json:"tracks_count"`
+			Duration    int `json:"duration"`
+			CreatedAt   int `json:"created_at"`
+			UpdatedAt   int `json:"updated_at"`
+			Images      struct {
+				Rectangle []string `json:"rectangle"`
+			} `json:"images"`
+			Genres []struct {
+				ID   int    `json:"id"`
+				Name string `json:"name"`
+				Path []int  `json:"path"`
+			} `json:"genres"`
+			Tags []struct {
+				Name struct {
+					Fr string `json:"fr"`
+					En string `json:"en"`
+					De string `json:"de"`
+					It string `json:"it"`
+					Nl string `json:"nl"`
+					Es string `json:"es"`
+					Pt string `json:"pt"`
+					Ja string `json:"ja"`
+				} `json:"name,omitempty"`
+				IsDiscover bool `json:"is_discover"`
+				Name0      struct {
+					Fr string `json:"fr"`
+					En string `json:"en"`
+					De string `json:"de"`
+					It string `json:"it"`
+					Nl string `json:"nl"`
+					Es string `json:"es"`
+					Pt string `json:"pt"`
+				} `json:"name,omitempty"`
+			} `json:"tags"`
+		} `json:"items"`
+	} `json:"playlists"`
+}

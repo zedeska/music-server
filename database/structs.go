@@ -8,7 +8,9 @@ type Track struct {
 	Path        string  `json:"path"`
 	Filename    string  `json:"filename"`
 	Artist      string  `json:"artist"`
+	ArtistID    int     `json:"artist_id"`
 	Album       string  `json:"album"`
+	AlbumID     string  `json:"album_id"`
 	Year        int     `json:"year"`
 	Duration    int     `json:"duration"`
 	Cover       string  `json:"cover"`
@@ -27,6 +29,14 @@ type Album struct {
 	SampleRate float32 `json:"sample_rate"`
 	Bitrate    int     `json:"bitrate"`
 	TrackCount int     `json:"track_count"`
+}
+
+type Artist struct {
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	Image       string  `json:"image"`
+	TopTracks   []Track `json:"top_tracks"`
+	LastRelease []Album `json:"last_release"`
 }
 
 func (p *Album) ToJSON() []byte {
