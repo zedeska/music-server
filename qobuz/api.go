@@ -212,7 +212,7 @@ func GetArtist(id string) (db.Artist, error) {
 		})
 	}
 
-	var image string = "https://static.qobuz.com/images/artists/covers/medium/" + temp_results.Images.Portrait.Hash + temp_results.Images.Portrait.Format
+	var image string = "https://static.qobuz.com/images/artists/covers/medium/" + temp_results.Images.Portrait.Hash + "." + temp_results.Images.Portrait.Format
 
 	var artist db.Artist = db.Artist{
 		ID:          temp_results.ID,
