@@ -172,8 +172,9 @@ func GetArtist(id string) (db.Artist, error) {
 		},
 		Method: "GET",
 		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
-			"X-App-Id":   "798273057",
+			"User-Agent":        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"X-App-Id":          "798273057",
+			"X-User-Auth-Token": "mPhMKfJnkp1M2GcWnznMdzlE9rT6jBA4O24c_KzGZ5uiMA7M3HCxZ4tGXMZljV-1kzA-hc86oMWyFdN1CD4vYw",
 		},
 		ResponseStruct: &QobuzArtist{},
 	}
