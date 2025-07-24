@@ -167,8 +167,8 @@ func GetArtist(id string) (db.Artist, error) {
 	request := goaxios.GoAxios{
 		Url: API_URL + "artist/page",
 		Query: map[string]string{
-			"artist_id": id,
 			"sort":      "release_date",
+			"artist_id": id,
 		},
 		Method: "GET",
 		Headers: map[string]string{
