@@ -40,6 +40,7 @@ func InitDB() {
 			path TEXT,
 			filename VARCHAR(50),
 			artist VARCHAR(100),
+			artist_id VARCHAR(50),
 			album VARCHAR(100),
 			year INTEGER,
 			duration INTEGER,
@@ -118,8 +119,8 @@ func AddTrack(track Track) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO track (id, title, path, filename, artist, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
+	_, err = db.Exec("INSERT INTO track (id, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
 	}
@@ -235,7 +236,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
+	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.artist_id, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -247,7 +248,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 
 	for rows.Next() {
 		var track Track
-		if err := rows.Scan(&track.ID, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
+		if err := rows.Scan(&track.ID, &track.Title, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		tracks.Data = append(tracks.Data, track)
