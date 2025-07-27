@@ -143,6 +143,7 @@ func GetAlbum(id string) (db.Album, error) {
 			ID:          track.ID,
 			Title:       track.Title,
 			Artist:      track.Performer.Name,
+			ArtistID:    track.Performer.ID,
 			Album:       temp_results.Title,
 			Duration:    track.Duration,
 			Cover:       temp_results.Image.Small,
