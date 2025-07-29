@@ -82,7 +82,7 @@ func CheckIfTrackExists(id int) bool {
 	defer db.Close()
 
 	var track Track
-	err = db.QueryRow("SELECT * FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	err = db.QueryRow("SELECT * FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
 	if track.ID == 0 || err != nil {
 		return false
 	} else {
