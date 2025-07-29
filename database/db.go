@@ -40,7 +40,7 @@ func InitDB() {
 			path TEXT,
 			filename VARCHAR(50),
 			artist VARCHAR(100),
-			artist_id VARCHAR(50),
+			artist_id INTEGER,
 			album VARCHAR(100),
 			year INTEGER,
 			duration INTEGER,
