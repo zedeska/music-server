@@ -316,7 +316,7 @@ func GetPlaylistTracks(playlistID int) ([]int, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT track_id FROM in_playlist WHERE id_playlist = ?", playlistID)
+	rows, err := db.Query("SELECT id_track FROM in_playlist WHERE id_playlist = ?", playlistID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
