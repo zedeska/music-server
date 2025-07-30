@@ -46,8 +46,9 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-		PlaylistID int   `json:"playlist_id"`
-		TrackIDs   []int `json:"track_ids"`
+		Token      string `json:"token"`
+		PlaylistID int    `json:"playlist_id"`
+		TrackIDs   []int  `json:"track_ids"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -55,13 +56,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := r.URL.Query().Get("token")
-	if token == "" {
-		http.Error(w, "Missing authentication token", http.StatusUnauthorized)
-		return
-	}
-
-	userID, err := db.GetUserID(token)
+	userID, err := db.GetUserID(data.Token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
