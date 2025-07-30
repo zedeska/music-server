@@ -31,9 +31,158 @@ func main() {
 	http.HandleFunc("/register", RegisterHandler)
 	http.HandleFunc("/album", getAlbumHandler)
 	http.HandleFunc("/artist", artistHandler)
+	http.HandleFunc("/playlist", playlistHandler)
+	http.HandleFunc("/user-playlists", userPlaylistsHandler)
+	http.HandleFunc("/create-playlist", createPlaylistHandler)
+	http.HandleFunc("/add-to-playlist", addToPlaylistHandler)
 	http.HandleFunc("/listened", listenedHandler)
 	http.ListenAndServe(":8488", nil)
+}
 
+func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		PlaylistID int   `json:"playlist_id"`
+		TrackIDs   []int `json:"track_ids"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Missing authentication token", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := db.GetUserID(token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if !e {
+		http.Error(w, "You do not own this playlist", http.StatusForbidden)
+		return
+	}
+
+	for _, ID := range data.TrackIDs {
+		e, err := db.IsTrackInPlaylist(data.PlaylistID, ID)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		if e {
+			continue
+		}
+		err = db.AddTrackToPlaylist(data.PlaylistID, ID)
+		if err != nil {
+			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Tracks added to playlist successfully"))
+}
+
+func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Name  string `json:"name"`
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(data.Token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	playlistID, err := db.CreatePlaylist(userID, data.Name)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(strconv.Itoa(playlistID)))
+}
+
+func userPlaylistsHandler(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "Missing authentication token", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := db.GetUserID(token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	playlists, err := db.GetPlaylistsByUserID(userID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(playlists.ToJSON())
+}
+
+func playlistHandler(w http.ResponseWriter, r *http.Request) {
+	playlistIDStr := r.URL.Query().Get("id")
+	if playlistIDStr == "" {
+		http.Error(w, "Missing playlist ID", http.StatusBadRequest)
+		return
+	}
+
+	playlistID, err := strconv.Atoi(playlistIDStr)
+	if err != nil {
+		http.Error(w, "Invalid playlist ID", http.StatusBadRequest)
+		return
+	}
+
+	playlist, err := db.GetPlaylistByID(playlistID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	tracks, err := db.GetPlaylistTracks(playlistID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	err = constitutePlaylist(playlist, tracks)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(playlist.ToJSON())
 }
 
 func artistHandler(w http.ResponseWriter, r *http.Request) {
@@ -261,4 +410,15 @@ func play(id int) (string, error) {
 
 		return track.Path, nil
 	}
+}
+
+func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
+	for _, trackID := range tracks {
+		track, err := qobuz.GetTrack(trackID)
+		if err != nil {
+			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
+		}
+		playlist.Tracks = append(playlist.Tracks, track)
+	}
+	return nil
 }

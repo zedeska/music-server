@@ -40,7 +40,27 @@ type Artist struct {
 	LastRelease []Album `json:"last_release"`
 }
 
+type Playlist struct {
+	ID     int     `json:"id"`
+	Name   string  `json:"name"`
+	Tracks []Track `json:"tracks"`
+}
+
+type Playlists struct {
+	Playlists []Playlist `json:"playlists"`
+}
+
+func (p *Playlists) ToJSON() []byte {
+	data, _ := json.Marshal(p)
+	return data
+}
+
 func (p *Album) ToJSON() []byte {
+	data, _ := json.Marshal(p)
+	return data
+}
+
+func (p *Playlist) ToJSON() []byte {
 	data, _ := json.Marshal(p)
 	return data
 }

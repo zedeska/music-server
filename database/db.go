@@ -56,6 +56,19 @@ func InitDB() {
 			FOREIGN KEY (id_user) REFERENCES user(id)
 		);
 
+		CREATE TABLE IF NOT EXISTS playlist (
+			id_playlist INTEGER PRIMARY KEY AUTOINCREMENT,
+			id_user INTEGER,
+			name VARCHAR(50),
+			FOREIGN KEY (id_user) REFERENCES user(id)
+		);
+
+		CREATE TABLE IF NOT EXISTS in_playlist (
+			id_playlist INTEGER PRIMARY KEY AUTOINCREMENT,
+			id_track INTEGER,
+			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist)
+		);
+
 		CREATE TABLE IF NOT EXISTS listened (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			id_user INTEGER,
@@ -264,4 +277,142 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func GetPlaylistsByUserID(userID int) (*Playlists, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id_playlist, name FROM playlist WHERE id_user = ?", userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var playlists Playlists
+
+	for rows.Next() {
+		var playlist Playlist
+		if err := rows.Scan(&playlist.ID, &playlist.Name); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		playlists.Playlists = append(playlists.Playlists, playlist)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return &playlists, nil
+}
+
+func GetPlaylistTracks(playlistID int) ([]int, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT track_id FROM in_playlist WHERE id_playlist = ?", playlistID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var trackIDs []int
+	for rows.Next() {
+		var trackID int
+		if err := rows.Scan(&trackID); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		trackIDs = append(trackIDs, trackID)
+	}
+
+	return trackIDs, nil
+}
+
+func GetPlaylistByID(playlistID int) (*Playlist, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	var playlist Playlist
+	err = db.QueryRow("SELECT id_playlist, name FROM playlist WHERE id_playlist = ?", playlistID).Scan(&playlist.ID, &playlist.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return &playlist, nil
+}
+
+func AddTrackToPlaylist(playlistID, trackID int) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO in_playlist (id_playlist, id_track) VALUES (?, ?)", playlistID, trackID)
+	if err != nil {
+		return fmt.Errorf("failed to insert track into playlist: %w", err)
+	}
+
+	return nil
+}
+
+func CreatePlaylist(userID int, name string) (int, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return 0, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	result, err := db.Exec("INSERT INTO playlist (id_user, name) VALUES (?, ?)", userID, name)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create playlist: %w", err)
+	}
+
+	playlistID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get last insert ID: %w", err)
+	}
+
+	return int(playlistID), nil
+}
+
+func IsTrackInPlaylist(playlistID, trackID int) (bool, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return false, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	var exists int
+	err = db.QueryRow("SELECT COUNT(*) FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return exists > 0, nil
+}
+
+func IsPlaylistOwnedByUser(userID int, playlistID int) (bool, error) {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return false, fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	var exists int
+	err = db.QueryRow("SELECT COUNT(*) FROM playlist WHERE id_user = ? AND id_playlist = ?", userID, playlistID).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	return exists > 0, nil
 }
