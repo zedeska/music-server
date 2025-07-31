@@ -64,7 +64,7 @@ func InitDB() {
 		);
 
 		CREATE TABLE IF NOT EXISTS in_playlist (
-			id_playlist INTEGER PRIMARY KEY AUTOINCREMENT,
+			id_playlist INTEGER,
 			id_track INTEGER,
 			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist)
 		);
