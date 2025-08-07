@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	db "music-server/database"
 	"music-server/qobuz"
@@ -264,7 +265,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath, err := play(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -380,7 +381,7 @@ func play(id int) (string, error) {
 
 		err = qobuz.Download(qobuzTrack.ID, MAX_QUALITY, file_path)
 		if err != nil {
-			return "", err
+			return "", errors.New("failed to cache track")
 		}
 
 		if MAX_QUALITY == "6" {
