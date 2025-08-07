@@ -8,7 +8,7 @@ import (
 	"github.com/opensaucerer/goaxios"
 )
 
-var DAB_API_URL string = "https://dabmusic.xyz/api/"
+var DAB_API_URL string = "https://dab.yeet.su/api/"
 var SQUID_API_URL string = "https://eu.qobuz.squid.wtf/api/"
 
 type DabDLResult struct {
