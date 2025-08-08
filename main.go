@@ -36,8 +36,95 @@ func main() {
 	http.HandleFunc("/user-playlists", userPlaylistsHandler)
 	http.HandleFunc("/create-playlist", createPlaylistHandler)
 	http.HandleFunc("/add-to-playlist", addToPlaylistHandler)
+	http.HandleFunc("/delete-playlist", deletePlaylistHandler)
+	http.HandleFunc("/delete-track-from-playlist", deleteTrackFromPlaylistHandler)
 	http.HandleFunc("/listened", listenedHandler)
 	http.ListenAndServe(":8488", nil)
+}
+
+func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Token      string `json:"token"`
+		PlaylistID int    `json:"playlist_id"`
+		TrackID    int    `json:"track_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(data.Token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if !e {
+		http.Error(w, "You do not own this playlist", http.StatusForbidden)
+		return
+	}
+
+	err = db.DeleteTrackFromPlaylist(data.PlaylistID, data.TrackID)
+	if err != nil {
+		http.Error(w, "Failed to delete track from playlist", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Track deleted from playlist successfully"))
+}
+
+func deletePlaylistHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Token      string `json:"token"`
+		PlaylistID int    `json:"playlist_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(data.Token)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if !e {
+		http.Error(w, "You do not own this playlist", http.StatusForbidden)
+		return
+	}
+
+	err = db.DeletePlaylist(data.PlaylistID)
+	if err != nil {
+		http.Error(w, "Failed to delete playlist", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Playlist deleted successfully"))
 }
 
 func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {

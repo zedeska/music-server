@@ -66,7 +66,7 @@ func InitDB() {
 		CREATE TABLE IF NOT EXISTS in_playlist (
 			id_playlist INTEGER,
 			id_track INTEGER,
-			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist)
+			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist) ON DELETE CASCADE
 		);
 
 		CREATE TABLE IF NOT EXISTS listened (
@@ -415,4 +415,34 @@ func IsPlaylistOwnedByUser(userID int, playlistID int) (bool, error) {
 	}
 
 	return exists > 0, nil
+}
+
+func DeletePlaylist(playlistID int) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("DELETE FROM playlist, in_playlist WHERE id_playlist = ?", playlistID)
+	if err != nil {
+		return fmt.Errorf("failed to delete playlist: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteTrackFromPlaylist(playlistID, trackID int) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("DELETE FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID)
+	if err != nil {
+		return fmt.Errorf("failed to delete track from playlist: %w", err)
+	}
+
+	return nil
 }
