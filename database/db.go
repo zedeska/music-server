@@ -424,9 +424,14 @@ func DeletePlaylist(playlistID int) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("DELETE FROM playlist, in_playlist WHERE id_playlist = ?", playlistID)
+	_, err = db.Exec("DELETE FROM playlist WHERE id_playlist = ?", playlistID)
 	if err != nil {
 		return fmt.Errorf("failed to delete playlist: %w", err)
+	}
+
+	_, err = db.Exec("DELETE FROM in_playlist WHERE id_playlist = ?", playlistID)
+	if err != nil {
+		return fmt.Errorf("failed to delete tracks from playlist: %w", err)
 	}
 
 	return nil
