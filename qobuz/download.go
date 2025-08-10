@@ -9,7 +9,8 @@ import (
 )
 
 var DAB_API_URL string = "https://dab.yeet.su/api/"
-var SQUID_API_URL string = "https://eu.qobuz.squid.wtf/api/"
+var SQUID_API_EU_URL string = "https://eu.qobuz.squid.wtf/api/"
+var SQUID_API_US_URL string = "https://us.qobuz.squid.wtf/api/"
 
 type DabDLResult struct {
 	Url string `json:"url"`
@@ -52,9 +53,9 @@ func dabDownload(id int, quality string, path string) error {
 	return nil
 }
 
-func squidDownload(id int, quality string, path string) error {
+func squidDownload(id int, quality string, path string, api string) error {
 	request := goaxios.GoAxios{
-		Url: SQUID_API_URL + "download-music",
+		Url: api + "download-music",
 		Query: map[string]string{
 			"quality":  quality,
 			"track_id": strconv.Itoa(id),
@@ -88,11 +89,14 @@ func squidDownload(id int, quality string, path string) error {
 
 func Download(id int, quality string, path string) error {
 
-	err := squidDownload(id, quality, path)
+	err := squidDownload(id, quality, path, SQUID_API_EU_URL)
 	if err != nil {
-		err = dabDownload(id, quality, path)
+		err := squidDownload(id, quality, path, SQUID_API_US_URL)
 		if err != nil {
-			return fmt.Errorf("error downloading track: %w", err)
+			err = dabDownload(id, quality, path)
+			if err != nil {
+				return fmt.Errorf("error downloading track: %w", err)
+			}
 		}
 	}
 
