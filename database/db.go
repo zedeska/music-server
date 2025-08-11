@@ -53,7 +53,7 @@ func InitDB() {
 			id_playlist INTEGER PRIMARY KEY AUTOINCREMENT,
 			id_user INTEGER,
 			name VARCHAR(50),
-			FOREIGN KEY (id_user) REFERENCES user(id)
+			FOREIGN KEY (id_user) REFERENCES user(id_user)
 		);
 
 		CREATE TABLE IF NOT EXISTS playlist (
