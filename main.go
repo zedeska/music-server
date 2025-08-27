@@ -538,7 +538,7 @@ func checkAndAddTrack(trackID int) error {
 		}
 
 	} else if trackExists && needDownload {
-		file_name, file_path, err := downloadQobuzTrack(trackID)
+		file_path, file_name, err := downloadQobuzTrack(trackID)
 		if err != nil {
 			return fmt.Errorf("failed to download track: %w", err)
 		}
