@@ -172,10 +172,6 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		trackExist, _ := db.CheckIfTrackExists(ID)
-		if err != nil {
-			http.Error(w, "Failed to check if track exists", http.StatusInternalServerError)
-			return
-		}
 
 		if !trackExist {
 			track, err := qobuz.GetTrack(ID)
