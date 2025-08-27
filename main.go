@@ -171,16 +171,24 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		track, err := qobuz.GetTrack(ID)
+		trackExist, _ := db.CheckIfTrackExists(ID)
 		if err != nil {
-			http.Error(w, "Failed to get track", http.StatusInternalServerError)
+			http.Error(w, "Failed to check if track exists", http.StatusInternalServerError)
 			return
 		}
 
-		err = db.AddPartialTrack(track)
-		if err != nil {
-			http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
-			return
+		if !trackExist {
+			track, err := qobuz.GetTrack(ID)
+			if err != nil {
+				http.Error(w, "Failed to get track", http.StatusInternalServerError)
+				return
+			}
+
+			err = db.AddPartialTrack(track)
+			if err != nil {
+				http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		err = db.AddTrackToPlaylist(data.PlaylistID, ID)
