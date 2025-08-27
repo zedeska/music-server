@@ -87,7 +87,7 @@ func InitDB() {
 	fmt.Println("Database initialized successfully")
 }
 
-func CheckIfTrackExists(id int) bool {
+func CheckIfTrackExists(id int) (bool, bool) {
 	db, err := sql.Open("sqlite3", "./db.db")
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
@@ -97,16 +97,19 @@ func CheckIfTrackExists(id int) bool {
 	var track Track
 	err = db.QueryRow("SELECT * FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
 	if track.ID == 0 || err != nil {
-		return false
+		return false, true
 	} else {
+		if track.Path == "" {
+			return true, true
+		}
 		_, err := os.Stat(track.Path)
 		if errors.Is(err, os.ErrNotExist) {
 			db.Exec("DELETE FROM track WHERE id = ?", track.ID)
-			return false
+			return false, true
 		}
 	}
 
-	return true
+	return true, false
 }
 
 func GetTrack(id int) (*Track, error) {
@@ -136,6 +139,37 @@ func AddTrack(track Track) error {
 		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
+	}
+
+	return nil
+}
+
+func AddPartialTrack(track Track) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO track (id, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
+	if err != nil {
+		return fmt.Errorf("failed to insert partial track: %w", err)
+	}
+
+	return nil
+}
+
+func UpdateTrackPathAndFilename(id int, file_path string, file_name string) error {
+	db, err := sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return fmt.Errorf("failed to open database: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec("UPDATE track SET filename = ?, path = ? WHERE id = ?", file_name, file_path, id)
+	if err != nil {
+		return fmt.Errorf("failed to update track: %w", err)
 	}
 
 	return nil

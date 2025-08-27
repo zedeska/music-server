@@ -166,9 +166,23 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
+
 		if e {
 			continue
 		}
+
+		track, err := qobuz.GetTrack(ID)
+		if err != nil {
+			http.Error(w, "Failed to get track", http.StatusInternalServerError)
+			return
+		}
+
+		err = db.AddPartialTrack(track)
+		if err != nil {
+			http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
+			return
+		}
+
 		err = db.AddTrackToPlaylist(data.PlaylistID, ID)
 		if err != nil {
 			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
@@ -457,18 +471,48 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func play(id int) (string, error) {
-	if !db.CheckIfTrackExists(id) {
-		qobuzTrack, err := qobuz.GetTrack(id)
+	err := checkAndAddTrack(id)
+	if err != nil {
+		return "", fmt.Errorf("failed to check and add track: %w", err)
+	}
+
+	track, err := db.GetTrack(id)
+	if err != nil {
+		return "", fmt.Errorf("failed to get track: %w", err)
+	}
+
+	return track.Path, nil
+}
+
+func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
+	for _, trackID := range tracks {
+		track, err := db.GetTrack(trackID)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
 		}
+		playlist.Tracks = append(playlist.Tracks, *track)
+	}
+	return nil
+}
 
-		file_name := utils.RandomString(50)
-		file_path := filepath.Join(SONG_FOLDER, file_name)
+func downloadQobuzTrack(id int) (string, string, error) {
+	file_name := utils.RandomString(50)
+	file_path := filepath.Join(SONG_FOLDER, file_name)
 
-		err = qobuz.Download(qobuzTrack.ID, MAX_QUALITY, file_path)
+	err := qobuz.Download(id, MAX_QUALITY, file_path)
+	if err != nil {
+		return "", "", errors.New("failed to cache track")
+	}
+
+	return file_path, file_name, nil
+}
+
+func checkAndAddTrack(trackID int) error {
+	trackExists, needDownload := db.CheckIfTrackExists(trackID)
+	if !trackExists {
+		qobuzTrack, err := qobuz.GetTrack(trackID)
 		if err != nil {
-			return "", errors.New("failed to cache track")
+			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
 		}
 
 		if MAX_QUALITY == "6" {
@@ -476,32 +520,30 @@ func play(id int) (string, error) {
 			qobuzTrack.Bitrate = 16
 		}
 
+		file_name, file_path, err := downloadQobuzTrack(trackID)
+		if err != nil {
+			return fmt.Errorf("failed to download track: %w", err)
+		}
+
 		qobuzTrack.Path = file_path
 		qobuzTrack.Filename = file_name
 
 		err = db.AddTrack(qobuzTrack)
 		if err != nil {
-			return "", err
+			return fmt.Errorf("failed to add track to database: %w", err)
 		}
 
-		return file_path, nil
-	} else {
-		track, err := db.GetTrack(id)
+	} else if trackExists && needDownload {
+		file_name, file_path, err := downloadQobuzTrack(trackID)
 		if err != nil {
-			return "", fmt.Errorf("failed to get track: %w", err)
+			return fmt.Errorf("failed to download track: %w", err)
 		}
 
-		return track.Path, nil
-	}
-}
-
-func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
-	for _, trackID := range tracks {
-		track, err := qobuz.GetTrack(trackID)
+		err = db.UpdateTrackPathAndFilename(trackID, file_path, file_name)
 		if err != nil {
-			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
+			return fmt.Errorf("failed to update track in database: %w", err)
 		}
-		playlist.Tracks = append(playlist.Tracks, track)
+
 	}
 	return nil
 }
