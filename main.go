@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,10 +16,22 @@ import (
 
 var SONG_FOLDER string
 var MAX_QUALITY string = "6"
+var dbConn *sql.DB
 
 func main() {
 
-	db.InitDB()
+	var err error
+	if _, err := os.Stat("./db.db"); err != nil {
+		os.Create("db.db")
+	}
+
+	dbConn, err = sql.Open("sqlite3", "./db.db")
+	if err != nil {
+		return
+	}
+	defer dbConn.Close()
+
+	db.InitDB(dbConn)
 	homedir, _ := os.UserHomeDir()
 	SONG_FOLDER = homedir + "/Music"
 	if _, err := os.Stat(SONG_FOLDER); os.IsNotExist(err) {
@@ -59,13 +72,13 @@ func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(data.Token)
+	userID, err := db.GetUserID(dbConn, data.Token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	e, err := db.IsPlaylistOwnedByUser(dbConn, userID, data.PlaylistID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -75,7 +88,7 @@ func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.DeleteTrackFromPlaylist(data.PlaylistID, data.TrackID)
+	err = db.DeleteTrackFromPlaylist(dbConn, data.PlaylistID, data.TrackID)
 	if err != nil {
 		http.Error(w, "Failed to delete track from playlist", http.StatusInternalServerError)
 		return
@@ -101,13 +114,13 @@ func deletePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(data.Token)
+	userID, err := db.GetUserID(dbConn, data.Token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	e, err := db.IsPlaylistOwnedByUser(dbConn, userID, data.PlaylistID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -117,7 +130,7 @@ func deletePlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.DeletePlaylist(data.PlaylistID)
+	err = db.DeletePlaylist(dbConn, data.PlaylistID)
 	if err != nil {
 		http.Error(w, "Failed to delete playlist", http.StatusInternalServerError)
 		return
@@ -144,13 +157,13 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(data.Token)
+	userID, err := db.GetUserID(dbConn, data.Token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	e, err := db.IsPlaylistOwnedByUser(userID, data.PlaylistID)
+	e, err := db.IsPlaylistOwnedByUser(dbConn, userID, data.PlaylistID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -161,7 +174,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ID := range data.TrackIDs {
-		e, err := db.IsTrackInPlaylist(data.PlaylistID, ID)
+		e, err := db.IsTrackInPlaylist(dbConn, data.PlaylistID, ID)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -171,7 +184,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		trackExist, _ := db.CheckIfTrackExists(ID)
+		trackExist, _ := db.CheckIfTrackExists(dbConn, ID)
 
 		if !trackExist {
 			track, err := qobuz.GetTrack(ID)
@@ -180,14 +193,14 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			err = db.AddPartialTrack(track)
+			err = db.AddPartialTrack(dbConn, track)
 			if err != nil {
 				http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
 				return
 			}
 		}
 
-		err = db.AddTrackToPlaylist(data.PlaylistID, ID)
+		err = db.AddTrackToPlaylist(dbConn, data.PlaylistID, ID)
 		if err != nil {
 			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
 			return
@@ -214,13 +227,13 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(data.Token)
+	userID, err := db.GetUserID(dbConn, data.Token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	playlistID, err := db.CreatePlaylist(userID, data.Name)
+	playlistID, err := db.CreatePlaylist(dbConn, userID, data.Name)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -237,13 +250,13 @@ func userPlaylistsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(token)
+	userID, err := db.GetUserID(dbConn, token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	playlists, err := db.GetPlaylistsByUserID(userID)
+	playlists, err := db.GetPlaylistsByUserID(dbConn, userID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -267,13 +280,13 @@ func playlistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playlist, err := db.GetPlaylistByID(playlistID)
+	playlist, err := db.GetPlaylistByID(dbConn, playlistID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	tracks, err := db.GetPlaylistTracks(playlistID)
+	tracks, err := db.GetPlaylistTracks(dbConn, playlistID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -320,14 +333,14 @@ func listenedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := db.GetUserID(token)
+	userID, err := db.GetUserID(dbConn, token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Fetch listened tracks for the user
-	listenedTracks, err := db.GetListenedTracks(userID, limit)
+	listenedTracks, err := db.GetListenedTracks(dbConn, userID, limit)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -358,7 +371,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenValid, err := db.CheckToken(token)
+	tokenValid, err := db.CheckToken(dbConn, token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -374,12 +387,12 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := db.GetUserID(token)
+	userId, err := db.GetUserID(dbConn, token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	err = db.AddToListen(userId, id)
+	err = db.AddToListen(dbConn, userId, id)
 
 	w.Header().Add("Content-Type", "audio/flac")
 
@@ -401,7 +414,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := db.Login(creds.Username, creds.Password)
+	token, err := db.Login(dbConn, creds.Username, creds.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -426,7 +439,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := db.Register(creds.Username, creds.Password)
+	token, err := db.Register(dbConn, creds.Username, creds.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -480,7 +493,7 @@ func play(id int) (string, error) {
 		return "", fmt.Errorf("failed to check and add track: %w", err)
 	}
 
-	track, err := db.GetTrack(id)
+	track, err := db.GetTrack(dbConn, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to get track: %w", err)
 	}
@@ -490,7 +503,7 @@ func play(id int) (string, error) {
 
 func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
 	for _, trackID := range tracks {
-		track, err := db.GetTrack(trackID)
+		track, err := db.GetTrack(dbConn, trackID)
 		if err != nil {
 			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
 		}
@@ -512,7 +525,7 @@ func downloadQobuzTrack(id int) (string, string, error) {
 }
 
 func checkAndAddTrack(trackID int) error {
-	trackExists, needDownload := db.CheckIfTrackExists(trackID)
+	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID)
 	if !trackExists {
 		qobuzTrack, err := qobuz.GetTrack(trackID)
 		if err != nil {
@@ -532,7 +545,7 @@ func checkAndAddTrack(trackID int) error {
 		qobuzTrack.Path = file_path
 		qobuzTrack.Filename = file_name
 
-		err = db.AddTrack(qobuzTrack)
+		err = db.AddTrack(dbConn, qobuzTrack)
 		if err != nil {
 			return fmt.Errorf("failed to add track to database: %w", err)
 		}
@@ -543,7 +556,7 @@ func checkAndAddTrack(trackID int) error {
 			return fmt.Errorf("failed to download track: %w", err)
 		}
 
-		err = db.UpdateTrackPathAndFilename(trackID, file_path, file_name)
+		err = db.UpdateTrackPathAndFilename(dbConn, trackID, file_path, file_name)
 		if err != nil {
 			return fmt.Errorf("failed to update track in database: %w", err)
 		}

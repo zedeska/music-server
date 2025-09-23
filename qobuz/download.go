@@ -9,8 +9,7 @@ import (
 )
 
 var DAB_API_URL string = "https://dab.yeet.su/api/"
-var SQUID_API_EU_URL string = "https://eu.qobuz.squid.wtf/api/"
-var SQUID_API_US_URL string = "https://us.qobuz.squid.wtf/api/"
+var SQUID_API_URL string = "https://qobuz.squid.wtf/api/"
 
 type DabDLResult struct {
 	Url string `json:"url"`
@@ -89,14 +88,11 @@ func squidDownload(id int, quality string, path string, api string) error {
 
 func Download(id int, quality string, path string) error {
 
-	err := squidDownload(id, quality, path, SQUID_API_EU_URL)
+	err := squidDownload(id, quality, path, SQUID_API_URL)
 	if err != nil {
-		err := squidDownload(id, quality, path, SQUID_API_US_URL)
+		err = dabDownload(id, quality, path)
 		if err != nil {
-			err = dabDownload(id, quality, path)
-			if err != nil {
-				return fmt.Errorf("error downloading track: %w", err)
-			}
+			return fmt.Errorf("error downloading track: %w", err)
 		}
 	}
 

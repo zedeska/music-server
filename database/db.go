@@ -13,18 +13,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB() {
-	if _, err := os.Stat("./db.db"); err != nil {
-		os.Create("db.db")
-	}
-
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		log.Fatalf("Failed to open database: %v", err) // Proper error logging
-	}
-	defer db.Close() // Ensure db is closed at the end
-
-	_, err = db.Exec(`
+func InitDB(db *sql.DB) {
+	_, err := db.Exec(`
 		BEGIN;
 
 		CREATE TABLE IF NOT EXISTS user (
@@ -87,15 +77,9 @@ func InitDB() {
 	fmt.Println("Database initialized successfully")
 }
 
-func CheckIfTrackExists(id int) (bool, bool) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
-	}
-	defer db.Close()
-
+func CheckIfTrackExists(db *sql.DB, id int) (bool, bool) {
 	var track Track
-	err = db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	err := db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
 	if track.ID == 0 || err != nil {
 		return false, true
 	} else {
@@ -112,15 +96,9 @@ func CheckIfTrackExists(id int) (bool, bool) {
 	return true, false
 }
 
-func GetTrack(id int) (*Track, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func GetTrack(db *sql.DB, id int) (*Track, error) {
 	var track Track
-	err = db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	err := db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -128,14 +106,8 @@ func GetTrack(id int) (*Track, error) {
 	return &track, nil
 }
 
-func AddTrack(track Track) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO track (id, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+func AddTrack(db *sql.DB, track Track) error {
+	_, err := db.Exec("INSERT INTO track (id, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
@@ -144,14 +116,8 @@ func AddTrack(track Track) error {
 	return nil
 }
 
-func AddPartialTrack(track Track) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO track (id, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+func AddPartialTrack(db *sql.DB, track Track) error {
+	_, err := db.Exec("INSERT INTO track (id, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert partial track: %w", err)
@@ -160,14 +126,8 @@ func AddPartialTrack(track Track) error {
 	return nil
 }
 
-func UpdateTrackPathAndFilename(id int, file_path string, file_name string) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("UPDATE track SET filename = ?, path = ? WHERE id = ?", file_name, file_path, id)
+func UpdateTrackPathAndFilename(db *sql.DB, id int, file_path string, file_name string) error {
+	_, err := db.Exec("UPDATE track SET filename = ?, path = ? WHERE id = ?", file_name, file_path, id)
 	if err != nil {
 		return fmt.Errorf("failed to update track: %w", err)
 	}
@@ -175,16 +135,14 @@ func UpdateTrackPathAndFilename(id int, file_path string, file_name string) erro
 	return nil
 }
 
-func Login(username, password string) (string, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return "", fmt.Errorf("failed to open database: %w", err)
+func Login(db *sql.DB, username, password string) (string, error) {
+	if username == "" || password == "" {
+		return "", errors.New("username and password cannot be empty")
 	}
-	defer db.Close()
 
 	var storedPassword string
 	var token string
-	err = db.QueryRow("SELECT password, token FROM user WHERE username = ?", username).Scan(&storedPassword, &token)
+	err := db.QueryRow("SELECT password, token FROM user WHERE username = ?", username).Scan(&storedPassword, &token)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -196,16 +154,13 @@ func Login(username, password string) (string, error) {
 	return token, nil
 }
 
-func Register(username, password string) (string, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return "", fmt.Errorf("failed to open database: %w", err)
+func Register(db *sql.DB, username, password string) (string, error) {
+	if username == "" || password == "" {
+		return "", errors.New("username and password cannot be empty")
 	}
-	defer db.Close()
-
 	var exists int
-	// Check if username already exists	var exists int
-	err = db.QueryRow("SELECT COUNT(*) FROM user WHERE username = ?", username).Scan(&exists)
+	// Check if username already exists
+	err := db.QueryRow("SELECT COUNT(*) FROM user WHERE username = ?", username).Scan(&exists)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -229,15 +184,9 @@ func Register(username, password string) (string, error) {
 	return token, nil
 }
 
-func CheckToken(token string) (bool, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return false, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func CheckToken(db *sql.DB, token string) (bool, error) {
 	var exists int
-	err = db.QueryRow("SELECT COUNT(*) FROM user WHERE token = ?", token).Scan(&exists)
+	err := db.QueryRow("SELECT COUNT(*) FROM user WHERE token = ?", token).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -245,14 +194,8 @@ func CheckToken(token string) (bool, error) {
 	return exists > 0, nil
 }
 
-func AddToListen(userID, trackID int) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO listened (id_user, id_track, timestamp) VALUES (?, ?, ?)", userID, trackID, time.Now().Unix())
+func AddToListen(db *sql.DB, userID, trackID int) error {
+	_, err := db.Exec("INSERT INTO listened (id_user, id_track, timestamp) VALUES (?, ?, ?)", userID, trackID, time.Now().Unix())
 	if err != nil {
 		return fmt.Errorf("failed to insert listened record: %w", err)
 	}
@@ -260,15 +203,9 @@ func AddToListen(userID, trackID int) error {
 	return nil
 }
 
-func GetUserID(token string) (int, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return 0, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func GetUserID(db *sql.DB, token string) (int, error) {
 	var userID int
-	err = db.QueryRow("SELECT id_user FROM user WHERE token = ?", token).Scan(&userID)
+	err := db.QueryRow("SELECT id_user FROM user WHERE token = ?", token).Scan(&userID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -276,13 +213,7 @@ func GetUserID(token string) (int, error) {
 	return userID, nil
 }
 
-func GetListenedTracks(userID, limit int) ([]byte, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func GetListenedTracks(db *sql.DB, userID, limit int) ([]byte, error) {
 	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.artist_id, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
@@ -313,13 +244,7 @@ func GetListenedTracks(userID, limit int) ([]byte, error) {
 	return data, nil
 }
 
-func GetPlaylistsByUserID(userID int) (*Playlists, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func GetPlaylistsByUserID(db *sql.DB, userID int) (*Playlists, error) {
 	rows, err := db.Query("SELECT id_playlist, name FROM playlist WHERE id_user = ?", userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
@@ -343,13 +268,7 @@ func GetPlaylistsByUserID(userID int) (*Playlists, error) {
 	return &playlists, nil
 }
 
-func GetPlaylistTracks(playlistID int) ([]int, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func GetPlaylistTracks(db *sql.DB, playlistID int) ([]int, error) {
 	rows, err := db.Query("SELECT id_track FROM in_playlist WHERE id_playlist = ?", playlistID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
@@ -368,15 +287,11 @@ func GetPlaylistTracks(playlistID int) ([]int, error) {
 	return trackIDs, nil
 }
 
-func GetPlaylistByID(playlistID int) (*Playlist, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
+func GetPlaylistByID(db *sql.DB, playlistID int) (*Playlist, error) {
 	defer db.Close()
 
 	var playlist Playlist
-	err = db.QueryRow("SELECT id_playlist, name FROM playlist WHERE id_playlist = ?", playlistID).Scan(&playlist.ID, &playlist.Name)
+	err := db.QueryRow("SELECT id_playlist, name FROM playlist WHERE id_playlist = ?", playlistID).Scan(&playlist.ID, &playlist.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -384,14 +299,8 @@ func GetPlaylistByID(playlistID int) (*Playlist, error) {
 	return &playlist, nil
 }
 
-func AddTrackToPlaylist(playlistID, trackID int) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("INSERT INTO in_playlist (id_playlist, id_track) VALUES (?, ?)", playlistID, trackID)
+func AddTrackToPlaylist(db *sql.DB, playlistID, trackID int) error {
+	_, err := db.Exec("INSERT INTO in_playlist (id_playlist, id_track) VALUES (?, ?)", playlistID, trackID)
 	if err != nil {
 		return fmt.Errorf("failed to insert track into playlist: %w", err)
 	}
@@ -399,12 +308,10 @@ func AddTrackToPlaylist(playlistID, trackID int) error {
 	return nil
 }
 
-func CreatePlaylist(userID int, name string) (int, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return 0, fmt.Errorf("failed to open database: %w", err)
+func CreatePlaylist(db *sql.DB, userID int, name string) (int, error) {
+	if name == "" {
+		return 0, errors.New("playlist name cannot be empty")
 	}
-	defer db.Close()
 
 	result, err := db.Exec("INSERT INTO playlist (id_user, name) VALUES (?, ?)", userID, name)
 	if err != nil {
@@ -419,15 +326,9 @@ func CreatePlaylist(userID int, name string) (int, error) {
 	return int(playlistID), nil
 }
 
-func IsTrackInPlaylist(playlistID, trackID int) (bool, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return false, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func IsTrackInPlaylist(db *sql.DB, playlistID, trackID int) (bool, error) {
 	var exists int
-	err = db.QueryRow("SELECT COUNT(*) FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID).Scan(&exists)
+	err := db.QueryRow("SELECT COUNT(*) FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -435,15 +336,9 @@ func IsTrackInPlaylist(playlistID, trackID int) (bool, error) {
 	return exists > 0, nil
 }
 
-func IsPlaylistOwnedByUser(userID int, playlistID int) (bool, error) {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return false, fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
+func IsPlaylistOwnedByUser(db *sql.DB, userID int, playlistID int) (bool, error) {
 	var exists int
-	err = db.QueryRow("SELECT COUNT(*) FROM playlist WHERE id_user = ? AND id_playlist = ?", userID, playlistID).Scan(&exists)
+	err := db.QueryRow("SELECT COUNT(*) FROM playlist WHERE id_user = ? AND id_playlist = ?", userID, playlistID).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -451,14 +346,8 @@ func IsPlaylistOwnedByUser(userID int, playlistID int) (bool, error) {
 	return exists > 0, nil
 }
 
-func DeletePlaylist(playlistID int) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("DELETE FROM playlist WHERE id_playlist = ?", playlistID)
+func DeletePlaylist(db *sql.DB, playlistID int) error {
+	_, err := db.Exec("DELETE FROM playlist WHERE id_playlist = ?", playlistID)
 	if err != nil {
 		return fmt.Errorf("failed to delete playlist: %w", err)
 	}
@@ -471,14 +360,8 @@ func DeletePlaylist(playlistID int) error {
 	return nil
 }
 
-func DeleteTrackFromPlaylist(playlistID, trackID int) error {
-	db, err := sql.Open("sqlite3", "./db.db")
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-	defer db.Close()
-
-	_, err = db.Exec("DELETE FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID)
+func DeleteTrackFromPlaylist(db *sql.DB, playlistID, trackID int) error {
+	_, err := db.Exec("DELETE FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID)
 	if err != nil {
 		return fmt.Errorf("failed to delete track from playlist: %w", err)
 	}
