@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	db "music-server/database"
 	"music-server/qobuz"
 	"music-server/utils"
@@ -416,6 +417,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := db.Login(dbConn, creds.Username, creds.Password)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
