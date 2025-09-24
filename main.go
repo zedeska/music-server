@@ -290,8 +290,6 @@ func playlistHandler(w http.ResponseWriter, r *http.Request) {
 
 	tracks, err := db.GetPlaylistTracks(dbConn, playlistID)
 	if err != nil {
-		fmt.Println("error!")
-		fmt.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}

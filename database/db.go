@@ -288,8 +288,6 @@ func GetPlaylistTracks(db *sql.DB, playlistID int) ([]int, error) {
 }
 
 func GetPlaylistByID(db *sql.DB, playlistID int) (*Playlist, error) {
-	defer db.Close()
-
 	var playlist Playlist
 	err := db.QueryRow("SELECT id_playlist, name FROM playlist WHERE id_playlist = ?", playlistID).Scan(&playlist.ID, &playlist.Name)
 	if err != nil {
