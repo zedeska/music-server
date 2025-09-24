@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	db "music-server/database"
 	"music-server/qobuz"
 	"music-server/utils"
@@ -283,7 +282,8 @@ func playlistHandler(w http.ResponseWriter, r *http.Request) {
 
 	playlist, err := db.GetPlaylistByID(dbConn, playlistID)
 	if err != nil {
-		log.Println(err.Error())
+		fmt.Println("error!")
+		fmt.Println(err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
