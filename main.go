@@ -385,7 +385,6 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath, err := play(id)
 	if err != nil {
-		fmt.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -540,7 +539,7 @@ func checkAndAddTrack(trackID int) error {
 			qobuzTrack.Bitrate = 16
 		}
 
-		file_name, file_path, err := downloadQobuzTrack(trackID)
+		file_path, file_name, err := downloadQobuzTrack(trackID)
 		if err != nil {
 			return fmt.Errorf("failed to download track: %w", err)
 		}
