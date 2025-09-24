@@ -283,6 +283,7 @@ func playlistHandler(w http.ResponseWriter, r *http.Request) {
 
 	playlist, err := db.GetPlaylistByID(dbConn, playlistID)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -417,7 +418,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := db.Login(dbConn, creds.Username, creds.Password)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
