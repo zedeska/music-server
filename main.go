@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	db "music-server/database"
 	"music-server/qobuz"
 	"music-server/utils"
@@ -385,6 +386,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath, err := play(id)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
