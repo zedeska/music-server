@@ -219,6 +219,16 @@ func GetArtist(id string) (db.Artist, error) {
 		})
 	}
 
+	for _, album := range temp_results.Releases[3].Items {
+		albums = append(albums, db.Album{
+			ID:       album.ID,
+			Title:    album.Title,
+			Artist:   album.Artist.Name.Display,
+			ArtistID: album.Artist.ID,
+			Cover:    album.Image.Large,
+		})
+	}
+
 	var image string = "https://static.qobuz.com/images/artists/covers/medium/" + temp_results.Images.Portrait.Hash + "." + temp_results.Images.Portrait.Format
 
 	var artist db.Artist = db.Artist{
