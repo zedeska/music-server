@@ -69,6 +69,8 @@ func GetTrack(id int) (db.Track, error) {
 
 	temp_result, _ := res.Body.(*Deezer_track)
 
+	year, _ := strconv.Atoi(strings.Split(temp_result.ReleaseDate, "-")[0])
+
 	track := db.Track{
 		ID:          int(temp_result.ID),
 		Title:       temp_result.Title,
@@ -81,6 +83,7 @@ func GetTrack(id int) (db.Track, error) {
 		Bitrate:     16,
 		SampleRate:  44.1,
 		TrackNumber: temp_result.TrackPosition,
+		Year:        year,
 	}
 
 	return track, nil
