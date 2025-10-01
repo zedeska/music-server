@@ -17,6 +17,7 @@ type Track struct {
 	SampleRate  float32 `json:"sample_rate"`
 	Bitrate     int     `json:"bitrate"`
 	TrackNumber int     `json:"media_count"`
+	Platform    string  `json:"platform"`
 }
 
 type Album struct {
@@ -48,6 +49,19 @@ type Playlist struct {
 
 type Playlists struct {
 	Playlists []Playlist `json:"playlists"`
+}
+
+type Custom_search_result struct {
+	Tracks []Track `json:"tracks"`
+	Albums []Album `json:"albums"`
+}
+
+func (p Custom_search_result) ToJSON() []byte {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return nil
+	}
+	return data
 }
 
 func (p *Playlists) ToJSON() []byte {

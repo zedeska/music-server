@@ -1,11 +1,5 @@
 package qobuz
 
-import (
-	"encoding/json"
-
-	db "music-server/database"
-)
-
 type qobuz_search_result struct {
 	Query  string `json:"query"`
 	Albums struct {
@@ -273,19 +267,6 @@ type qobuz_search_result struct {
 			DisplayDate int `json:"display_date"`
 		} `json:"items"`
 	} `json:"stories"`
-}
-
-type custom_search_result struct {
-	Tracks []db.Track `json:"tracks"`
-	Albums []db.Album `json:"albums"`
-}
-
-func (p custom_search_result) ToJSON() []byte {
-	data, err := json.Marshal(p)
-	if err != nil {
-		return nil
-	}
-	return data
 }
 
 type QobuzAlbum struct {

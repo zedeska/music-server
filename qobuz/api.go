@@ -12,7 +12,7 @@ import (
 
 var API_URL string = "https://www.qobuz.com/api.json/0.2/"
 
-func Search(query string) (custom_search_result, error) {
+func Search(query string) (*db.Custom_search_result, error) {
 
 	request := goaxios.GoAxios{
 		Url: API_URL + "catalog/search",
@@ -35,12 +35,12 @@ func Search(query string) (custom_search_result, error) {
 
 	if res.Error != nil {
 		fmt.Println("Error:", res.Error)
-		return custom_search_result{}, res.Error
+		return &db.Custom_search_result{}, res.Error
 	}
 
 	temp_results, _ := res.Body.(*qobuz_search_result)
 
-	var results custom_search_result
+	var results db.Custom_search_result
 
 	for _, track := range temp_results.Tracks.Items {
 		results.Tracks = append(results.Tracks, db.Track{
@@ -69,7 +69,7 @@ func Search(query string) (custom_search_result, error) {
 		})
 	}
 
-	return results, nil
+	return &results, nil
 
 }
 
@@ -106,9 +106,10 @@ func GetTrack(id int) (db.Track, error) {
 		Duration:    temp_results.Duration,
 		Year:        year,
 		Cover:       temp_results.Album.Image.Large,
-		Bitrate:     temp_results.MaximumBitDepth,
-		SampleRate:  float32(temp_results.MaximumSamplingRate),
+		Bitrate:     16,
+		SampleRate:  44.1,
 		TrackNumber: temp_results.TrackNumber,
+		Platform:    "qobuz",
 	}
 
 	return track, nil

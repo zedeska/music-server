@@ -25,7 +25,9 @@ func InitDB(db *sql.DB) {
 		);
 
 		CREATE TABLE IF NOT EXISTS track (
-			id INTEGER PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			idqobuz INTEGER,
+			iddeezer INTEGER,
 			title VARCHAR(100),
 			path TEXT,
 			filename VARCHAR(50),
@@ -77,10 +79,11 @@ func InitDB(db *sql.DB) {
 	fmt.Println("Database initialized successfully")
 }
 
-func CheckIfTrackExists(db *sql.DB, id int) (bool, bool) {
+func CheckIfTrackExists(db *sql.DB, id int, platform string) (bool, bool) {
 	var track Track
-	err := db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
-	if track.ID == 0 || err != nil {
+
+	err := db.QueryRow(fmt.Sprintf("SELECT id, IFNULL(path, '') FROM track WHERE %s = ?", "id"+platform), id).Scan(&track.ID, &track.Path)
+	if track.ID == 0 || err == sql.ErrNoRows {
 		return false, true
 	} else {
 		if track.Path == "" {
@@ -92,13 +95,32 @@ func CheckIfTrackExists(db *sql.DB, id int) (bool, bool) {
 			return false, true
 		}
 	}
-
 	return true, false
 }
 
-func GetTrack(db *sql.DB, id int) (*Track, error) {
+func CheckIfTrackExistsByTitleAndDuration(db *sql.DB, id int, platform string, track_title string, track_duration int) (bool, bool) {
 	var track Track
-	err := db.QueryRow("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE id = ?", id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	err := db.QueryRow("SELECT id, IFNULL(path, '') FROM track WHERE title = ? AND duration = ?", track_title, track_duration).Scan(&track.ID, &track.Path)
+	if track.ID == 0 || err == sql.ErrNoRows {
+		return false, true
+	} else {
+		db.Exec(fmt.Sprintf("UPDATE track SET %s = ? WHERE id = ?", "id"+platform), id, track.ID)
+		if track.Path == "" {
+			return true, true
+		} else {
+			_, err := os.Stat(track.Path)
+			if errors.Is(err, os.ErrNotExist) {
+				db.Exec("DELETE FROM track WHERE id = ?", track.ID)
+				return false, true
+			}
+		}
+	}
+	return true, false
+}
+
+func GetTrack(db *sql.DB, id int, platformName string) (*Track, error) {
+	var track Track
+	err := db.QueryRow(fmt.Sprintf("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE %s = ?", "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -107,7 +129,7 @@ func GetTrack(db *sql.DB, id int) (*Track, error) {
 }
 
 func AddTrack(db *sql.DB, track Track) error {
-	_, err := db.Exec("INSERT INTO track (id, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
 		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
@@ -117,7 +139,7 @@ func AddTrack(db *sql.DB, track Track) error {
 }
 
 func AddPartialTrack(db *sql.DB, track Track) error {
-	_, err := db.Exec("INSERT INTO track (id, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
 		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
 	if err != nil {
 		return fmt.Errorf("failed to insert partial track: %w", err)

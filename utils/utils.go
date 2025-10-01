@@ -104,3 +104,16 @@ func DownloadAndCheckTime(path string, url string) error {
 
 	return nil
 }
+
+func GetPlatformName(platform int) (string, error) {
+	switch platform {
+	case 0:
+		return "", nil
+	case 1:
+		return "qobuz", nil
+	case 2:
+		return "deezer", nil
+	default:
+		return "Unknown", fmt.Errorf("unknown platform: %d", platform)
+	}
+}

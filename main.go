@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	db "music-server/database"
+	"music-server/deezer"
 	"music-server/qobuz"
 	"music-server/utils"
 	"net/http"
@@ -149,7 +150,10 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Token      string `json:"token"`
 		PlaylistID int    `json:"playlist_id"`
-		TrackIDs   []int  `json:"track_ids"`
+		TrackIDs   []struct {
+			ID       int `json:"id"`
+			Platform int `json:"platform"`
+		} `json:"track_ids"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -173,8 +177,8 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, ID := range data.TrackIDs {
-		e, err := db.IsTrackInPlaylist(dbConn, data.PlaylistID, ID)
+	for _, elt := range data.TrackIDs {
+		e, err := db.IsTrackInPlaylist(dbConn, data.PlaylistID, elt.ID)
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -184,23 +188,33 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		trackExist, _ := db.CheckIfTrackExists(dbConn, ID)
+		platformeName, err := utils.GetPlatformName(elt.Platform)
+		if err != nil {
+			http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
+			return
+		}
+
+		trackExist, _ := db.CheckIfTrackExists(dbConn, elt.ID, platformeName)
 
 		if !trackExist {
-			track, err := qobuz.GetTrack(ID)
+			track, err := searchTrackFromID(elt.ID, platformeName)
 			if err != nil {
-				http.Error(w, "Failed to get track", http.StatusInternalServerError)
+				http.Error(w, "Failed to find track", http.StatusInternalServerError)
 				return
 			}
 
-			err = db.AddPartialTrack(dbConn, track)
-			if err != nil {
-				http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
-				return
+			trackExist, _ = db.CheckIfTrackExistsByTitleAndDuration(dbConn, elt.ID, platformeName, track.Title, track.Duration)
+
+			if !trackExist {
+				err = db.AddPartialTrack(dbConn, track)
+				if err != nil {
+					http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 
-		err = db.AddTrackToPlaylist(dbConn, data.PlaylistID, ID)
+		err = db.AddTrackToPlaylist(dbConn, data.PlaylistID, elt.ID)
 		if err != nil {
 			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
 			return
@@ -353,6 +367,7 @@ func listenedHandler(w http.ResponseWriter, r *http.Request) {
 
 func playHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
+	platformStr := r.URL.Query().Get("p")
 	token := r.URL.Query().Get("token")
 
 	if idStr == "" {
@@ -365,9 +380,25 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if platformStr == "" {
+		http.Error(w, "Missing platform parameter", http.StatusBadRequest)
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid track ID", http.StatusBadRequest)
+		return
+	}
+
+	platform, err := strconv.Atoi(platformStr)
+	if err != nil {
+		http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
+		return
+	}
+	platformName, err := utils.GetPlatformName(platform)
+	if err != nil {
+		http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
 		return
 	}
 
@@ -381,7 +412,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath, err := play(id)
+	filePath, err := play(id, platformName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -457,15 +488,22 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := qobuz.Search(query)
+	results_qobuz, err := qobuz.Search(query)
+	if err != nil {
+		http.Error(w, "Invalid search query", http.StatusBadRequest)
+		return
+	}
+	results_deezer, err := deezer.Search(query)
 	if err != nil {
 		http.Error(w, "Invalid search query", http.StatusBadRequest)
 		return
 	}
 
+	results_qobuz.Tracks = append(results_qobuz.Tracks, results_deezer.Tracks...)
+
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(results.ToJSON())
+	w.Write(results_qobuz.ToJSON())
 }
 
 func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
@@ -487,13 +525,13 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(album.ToJSON())
 }
 
-func play(id int) (string, error) {
-	err := checkAndAddTrack(id)
+func play(id int, platform string) (string, error) {
+	err := checkAndAddTrack(id, platform)
 	if err != nil {
 		return "", fmt.Errorf("failed to check and add track: %w", err)
 	}
 
-	track, err := db.GetTrack(dbConn, id)
+	track, err := db.GetTrack(dbConn, id, platform)
 	if err != nil {
 		return "", fmt.Errorf("failed to get track: %w", err)
 	}
@@ -503,7 +541,7 @@ func play(id int) (string, error) {
 
 func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
 	for _, trackID := range tracks {
-		track, err := db.GetTrack(dbConn, trackID)
+		track, err := db.GetTrack(dbConn, trackID, "")
 		if err != nil {
 			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
 		}
@@ -512,50 +550,79 @@ func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
 	return nil
 }
 
-func downloadQobuzTrack(id int) (string, string, error) {
+func downloadTrack(id int, platform string) (string, string, error) {
 	file_name := utils.RandomString(50)
 	file_path := filepath.Join(SONG_FOLDER, file_name)
 
-	err := qobuz.Download(id, MAX_QUALITY, file_path)
-	if err != nil {
-		return "", "", errors.New("failed to cache track")
+	if platform == "qobuz" {
+		err := qobuz.Download(id, MAX_QUALITY, file_path)
+		if err != nil {
+			return "", "", errors.New("failed to cache track")
+		}
+	} else if platform == "deezer" {
+		err := deezer.Download(id, file_path)
+		if err != nil {
+			return "", "", errors.New("failed to cache track")
+		}
 	}
 
 	return file_path, file_name, nil
 }
 
-func checkAndAddTrack(trackID int) error {
-	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID)
+func searchTrackFromID(id int, platform string) (db.Track, error) {
+	if platform == "qobuz" {
+		return qobuz.GetTrack(id)
+	} else if platform == "deezer" {
+		return deezer.GetTrack(id)
+	}
+
+	return db.Track{}, fmt.Errorf("track not found")
+}
+
+func checkAndAddTrack(trackID int, platform string) error {
+	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID, platform)
+	var file_path string
+	var file_name string
+	var err error
+
 	if !trackExists {
-		qobuzTrack, err := qobuz.GetTrack(trackID)
+
+		track, err := searchTrackFromID(trackID, platform)
 		if err != nil {
-			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
+			return fmt.Errorf("failed to search track: %w", err)
 		}
 
-		if MAX_QUALITY == "6" {
-			qobuzTrack.SampleRate = 44.1
-			qobuzTrack.Bitrate = 16
+		trackExists, needDownload = db.CheckIfTrackExistsByTitleAndDuration(dbConn, trackID, platform, track.Title, track.Duration)
+		if needDownload {
+			file_path, file_name, err = downloadTrack(trackID, platform)
+			if err != nil {
+				return fmt.Errorf("failed to download track: %w", err)
+			}
 		}
+		if !trackExists {
+			if MAX_QUALITY == "6" {
+				track.SampleRate = 44.1
+				track.Bitrate = 16
+			}
 
-		file_path, file_name, err := downloadQobuzTrack(trackID)
-		if err != nil {
-			return fmt.Errorf("failed to download track: %w", err)
+			track.Path = file_path
+			track.Filename = file_name
+
+			err = db.AddTrack(dbConn, track)
+			if err != nil {
+				return fmt.Errorf("failed to add track to database: %w", err)
+			}
+		} else if trackExists && needDownload {
+			err = db.UpdateTrackPathAndFilename(dbConn, trackID, file_path, file_name)
+			if err != nil {
+				return fmt.Errorf("failed to update track in database: %w", err)
+			}
 		}
-
-		qobuzTrack.Path = file_path
-		qobuzTrack.Filename = file_name
-
-		err = db.AddTrack(dbConn, qobuzTrack)
-		if err != nil {
-			return fmt.Errorf("failed to add track to database: %w", err)
-		}
-
 	} else if trackExists && needDownload {
-		file_path, file_name, err := downloadQobuzTrack(trackID)
+		file_path, file_name, err = downloadTrack(trackID, platform)
 		if err != nil {
 			return fmt.Errorf("failed to download track: %w", err)
 		}
-
 		err = db.UpdateTrackPathAndFilename(dbConn, trackID, file_path, file_name)
 		if err != nil {
 			return fmt.Errorf("failed to update track in database: %w", err)

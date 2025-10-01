@@ -1,6 +1,6 @@
 package deezer
 
-type deezer_search_result struct {
+type Deezer_search_result struct {
 	Data []struct {
 		ID                    int    `json:"id"`
 		Readable              bool   `json:"readable"`
@@ -43,4 +43,73 @@ type deezer_search_result struct {
 	} `json:"data"`
 	Total int    `json:"total"`
 	Next  string `json:"next"`
+}
+
+type Deezer_track struct {
+	ID                    int64    `json:"id"`
+	Readable              bool     `json:"readable"`
+	Title                 string   `json:"title"`
+	TitleShort            string   `json:"title_short"`
+	TitleVersion          string   `json:"title_version"`
+	Isrc                  string   `json:"isrc"`
+	Link                  string   `json:"link"`
+	Share                 string   `json:"share"`
+	Duration              int      `json:"duration"`
+	TrackPosition         int      `json:"track_position"`
+	DiskNumber            int      `json:"disk_number"`
+	Rank                  int      `json:"rank"`
+	ReleaseDate           string   `json:"release_date"`
+	ExplicitLyrics        bool     `json:"explicit_lyrics"`
+	ExplicitContentLyrics int      `json:"explicit_content_lyrics"`
+	ExplicitContentCover  int      `json:"explicit_content_cover"`
+	Preview               string   `json:"preview"`
+	Bpm                   int      `json:"bpm"`
+	Gain                  float64  `json:"gain"`
+	AvailableCountries    []string `json:"available_countries"`
+	Contributors          []struct {
+		ID            int    `json:"id"`
+		Name          string `json:"name"`
+		Link          string `json:"link"`
+		Share         string `json:"share"`
+		Picture       string `json:"picture"`
+		PictureSmall  string `json:"picture_small"`
+		PictureMedium string `json:"picture_medium"`
+		PictureBig    string `json:"picture_big"`
+		PictureXl     string `json:"picture_xl"`
+		Radio         bool   `json:"radio"`
+		Tracklist     string `json:"tracklist"`
+		Type          string `json:"type"`
+		Role          string `json:"role"`
+	} `json:"contributors"`
+	Md5Image   string `json:"md5_image"`
+	TrackToken string `json:"track_token"`
+	Artist     struct {
+		ID            int    `json:"id"`
+		Name          string `json:"name"`
+		Link          string `json:"link"`
+		Share         string `json:"share"`
+		Picture       string `json:"picture"`
+		PictureSmall  string `json:"picture_small"`
+		PictureMedium string `json:"picture_medium"`
+		PictureBig    string `json:"picture_big"`
+		PictureXl     string `json:"picture_xl"`
+		Radio         bool   `json:"radio"`
+		Tracklist     string `json:"tracklist"`
+		Type          string `json:"type"`
+	} `json:"artist"`
+	Album struct {
+		ID          int    `json:"id"`
+		Title       string `json:"title"`
+		Link        string `json:"link"`
+		Cover       string `json:"cover"`
+		CoverSmall  string `json:"cover_small"`
+		CoverMedium string `json:"cover_medium"`
+		CoverBig    string `json:"cover_big"`
+		CoverXl     string `json:"cover_xl"`
+		Md5Image    string `json:"md5_image"`
+		ReleaseDate string `json:"release_date"`
+		Tracklist   string `json:"tracklist"`
+		Type        string `json:"type"`
+	} `json:"album"`
+	Type string `json:"type"`
 }
