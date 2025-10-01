@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 )
 
@@ -53,7 +54,7 @@ func main() {
 	http.HandleFunc("/delete-playlist", deletePlaylistHandler)
 	http.HandleFunc("/delete-track-from-playlist", deleteTrackFromPlaylistHandler)
 	http.HandleFunc("/listened", listenedHandler)
-	http.ListenAndServe(":8489", nil)
+	http.ListenAndServe(":8488", nil)
 }
 
 func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
@@ -497,6 +498,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Invalid search query", http.StatusBadRequest)
 		return
+	}
+
+	for e, deezer := range results_deezer.Tracks {
+		for _, qobuz := range results_qobuz.Tracks {
+			if deezer.Title == qobuz.Title && deezer.Artist == qobuz.Artist && deezer.Duration == qobuz.Duration {
+				results_deezer.Tracks = slices.Delete(results_deezer.Tracks, e, e)
+			}
+		}
 	}
 
 	results_qobuz.Tracks = append(results_qobuz.Tracks, results_deezer.Tracks...)

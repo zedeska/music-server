@@ -43,6 +43,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 				Album:    track.Album.Title,
 				Duration: track.Duration,
 				Cover:    track.Album.CoverMedium,
+				Platform: "deezer",
 			})
 		}
 	}
