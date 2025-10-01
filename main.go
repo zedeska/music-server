@@ -53,7 +53,7 @@ func main() {
 	http.HandleFunc("/delete-playlist", deletePlaylistHandler)
 	http.HandleFunc("/delete-track-from-playlist", deleteTrackFromPlaylistHandler)
 	http.HandleFunc("/listened", listenedHandler)
-	http.ListenAndServe(":8488", nil)
+	http.ListenAndServe(":8489", nil)
 }
 
 func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
