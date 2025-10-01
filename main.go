@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	db "music-server/database"
 	"music-server/deezer"
 	"music-server/qobuz"
@@ -601,7 +600,6 @@ func checkAndAddTrack(trackID int, platform string) error {
 		if err != nil {
 			return fmt.Errorf("failed to search track: %w", err)
 		}
-		log.Panicln(track)
 
 		trackExists, needDownload = db.CheckIfTrackExistsByTitleAndDuration(dbConn, trackID, platform, track.Title, track.Duration)
 		if needDownload {

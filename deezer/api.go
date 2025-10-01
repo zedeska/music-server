@@ -3,6 +3,7 @@ package deezer
 import (
 	"errors"
 	db "music-server/database"
+	"strconv"
 	"strings"
 
 	"github.com/opensaucerer/goaxios"
@@ -53,7 +54,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 
 func GetTrack(id int) (db.Track, error) {
 	request := goaxios.GoAxios{
-		Url:    API_URL + "track/" + string(rune(id)),
+		Url:    API_URL + "track/" + strconv.Itoa(id),
 		Method: "GET",
 		Headers: map[string]string{
 			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
