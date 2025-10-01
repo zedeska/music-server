@@ -152,6 +152,7 @@ func GetAlbum(id string) (db.Album, error) {
 			Bitrate:     track.MaximumBitDepth,
 			SampleRate:  float32(track.MaximumSamplingRate),
 			TrackNumber: track.TrackNumber,
+			Platform:    "qobuz",
 		})
 	}
 
