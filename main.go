@@ -502,13 +502,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	for e, deezer := range results_deezer.Tracks {
 		for _, qobuz := range results_qobuz.Tracks {
-			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Duration == qobuz.Duration {
-				results_deezer.Tracks = slices.Delete(results_deezer.Tracks, e, e+1)
+			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Title == qobuz.Title {
+				results_qobuz.Tracks = slices.Delete(results_qobuz.Tracks, e, e+1)
 			}
 		}
 	}
 
-	results_qobuz.Tracks = append(results_qobuz.Tracks, results_deezer.Tracks...)
+	results_deezer.Tracks = append(results_deezer.Tracks, results_qobuz.Tracks...)
+	results_deezer.Albums = append(results_deezer.Albums, results_qobuz.Albums...)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
