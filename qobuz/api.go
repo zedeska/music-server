@@ -44,7 +44,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 
 	for _, track := range temp_results.Tracks.Items {
 		if track.Version != nil {
-			track.Title = track.Title + "(" + track.Version.(string) + ")"
+			track.Title = strings.TrimSpace(track.Title) + " (" + track.Version.(string) + ")"
 		}
 		results.Tracks = append(results.Tracks, db.Track{
 			ID:         track.ID,
@@ -101,7 +101,7 @@ func GetTrack(id int) (db.Track, error) {
 	year, _ := strconv.Atoi(strings.Split(temp_results.ReleaseDateOriginal, "-")[0])
 
 	if temp_results.Version != nil {
-		temp_results.Title = temp_results.Title + "(" + temp_results.Version.(string) + ")"
+		temp_results.Title = strings.TrimSpace(temp_results.Title) + " (" + temp_results.Version.(string) + ")"
 	}
 
 	var track db.Track = db.Track{
