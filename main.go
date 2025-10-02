@@ -503,7 +503,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	for e, deezer := range results_deezer.Tracks {
 		for _, qobuz := range results_qobuz.Tracks {
 			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Duration == qobuz.Duration {
-				results_deezer.Tracks = slices.Delete(results_deezer.Tracks, e, e)
+				results_deezer.Tracks = slices.Delete(results_deezer.Tracks, e, e+1)
 			}
 		}
 	}
