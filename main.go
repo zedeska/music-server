@@ -500,8 +500,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for e, deezer := range results_deezer.Tracks {
-		for _, qobuz := range results_qobuz.Tracks {
+	for _, deezer := range results_deezer.Tracks {
+		for e, qobuz := range results_qobuz.Tracks {
 			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Title == qobuz.Title {
 				results_qobuz.Tracks = slices.Delete(results_qobuz.Tracks, e, e+1)
 			}
