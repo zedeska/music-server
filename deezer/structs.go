@@ -63,7 +63,7 @@ type Deezer_track struct {
 	ExplicitContentLyrics int      `json:"explicit_content_lyrics"`
 	ExplicitContentCover  int      `json:"explicit_content_cover"`
 	Preview               string   `json:"preview"`
-	Bpm                   int      `json:"bpm"`
+	Bpm                   float32  `json:"bpm"`
 	Gain                  float64  `json:"gain"`
 	AvailableCountries    []string `json:"available_countries"`
 	Contributors          []struct {
