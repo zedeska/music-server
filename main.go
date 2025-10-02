@@ -204,7 +204,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Duration)
+			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Title)
 
 			if !trackExist {
 				err = db.AddPartialTrack(dbConn, track)
@@ -601,7 +601,7 @@ func checkAndAddTrack(trackID int, platform string) error {
 			return fmt.Errorf("failed to search track: %w", err)
 		}
 
-		trackExists, needDownload = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, trackID, platform, track.Artist, track.Album, track.Duration)
+		trackExists, needDownload = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, trackID, platform, track.Artist, track.Album, track.Title)
 		if needDownload {
 			file_path, file_name, err = downloadTrack(trackID, platform)
 			if err != nil {
