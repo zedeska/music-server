@@ -204,7 +204,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			trackExist, _ = db.CheckIfTrackExistsByTitleAndDuration(dbConn, elt.ID, platformeName, track.Title, track.Duration)
+			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Duration)
 
 			if !trackExist {
 				err = db.AddPartialTrack(dbConn, track)
@@ -502,7 +502,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	for e, deezer := range results_deezer.Tracks {
 		for _, qobuz := range results_qobuz.Tracks {
-			if deezer.Title == qobuz.Title && deezer.Artist == qobuz.Artist && deezer.Duration == qobuz.Duration {
+			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Duration == qobuz.Duration {
 				results_deezer.Tracks = slices.Delete(results_deezer.Tracks, e, e)
 			}
 		}
@@ -601,7 +601,7 @@ func checkAndAddTrack(trackID int, platform string) error {
 			return fmt.Errorf("failed to search track: %w", err)
 		}
 
-		trackExists, needDownload = db.CheckIfTrackExistsByTitleAndDuration(dbConn, trackID, platform, track.Title, track.Duration)
+		trackExists, needDownload = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, trackID, platform, track.Artist, track.Album, track.Duration)
 		if needDownload {
 			file_path, file_name, err = downloadTrack(trackID, platform)
 			if err != nil {

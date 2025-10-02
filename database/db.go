@@ -98,9 +98,9 @@ func CheckIfTrackExists(db *sql.DB, id int, platform string) (bool, bool) {
 	return true, false
 }
 
-func CheckIfTrackExistsByTitleAndDuration(db *sql.DB, id int, platform string, track_title string, track_duration int) (bool, bool) {
+func CheckIfTrackExistsByArtistAndAlbum(db *sql.DB, id int, platform string, artist string, album string, track_duration int) (bool, bool) {
 	var track Track
-	err := db.QueryRow("SELECT id, IFNULL(path, '') FROM track WHERE title = ? AND duration = ?", track_title, track_duration).Scan(&track.ID, &track.Path)
+	err := db.QueryRow("SELECT id, IFNULL(path, '') FROM track WHERE artist = ? AND album = ? AND duration = ?", artist, album, track_duration).Scan(&track.ID, &track.Path)
 	if track.ID == 0 || err == sql.ErrNoRows {
 		return false, true
 	} else {
