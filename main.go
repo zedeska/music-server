@@ -513,7 +513,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(results_qobuz.ToJSON())
+	w.Write(results_deezer.ToJSON())
 }
 
 func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
