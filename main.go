@@ -508,6 +508,13 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	for e, qobuz := range results_qobuz.Albums {
+		for _, deezer := range results_deezer.Albums {
+			if deezer.Title == qobuz.Title && deezer.Artist == qobuz.Artist {
+				results_qobuz.Albums = slices.Delete(results_qobuz.Albums, e, e+1)
+			}
+		}
+	}
 
 	results_deezer.Tracks = append(results_deezer.Tracks, results_qobuz.Tracks...)
 	results_deezer.Albums = append(results_deezer.Albums, results_qobuz.Albums...)
@@ -518,14 +525,41 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
 	idStr := r.URL.Query().Get("id")
+	platformStr := r.URL.Query().Get("p")
+
+	if platformStr == "" {
+		http.Error(w, "Missing platform parameter", http.StatusBadRequest)
+		return
+	}
 
 	if idStr == "" {
 		http.Error(w, "Missing album ID", http.StatusBadRequest)
 		return
 	}
 
-	album, err := qobuz.GetAlbum(idStr)
+	platform, err := strconv.Atoi(platformStr)
+	if err != nil {
+		http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
+		return
+	}
+
+	var album db.Album
+	platformName, err := utils.GetPlatformName(platform)
+
+	if platformName == "deezer" {
+		var id int
+		id, err = strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid album ID", http.StatusBadRequest)
+			return
+		}
+		album, err = deezer.GetAlbum(id)
+	} else if platformName == "qobuz" {
+		album, err = qobuz.GetAlbum(idStr)
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

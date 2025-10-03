@@ -31,6 +31,7 @@ type Album struct {
 	SampleRate float32 `json:"sample_rate"`
 	Bitrate    int     `json:"bitrate"`
 	TrackCount int     `json:"track_count"`
+	Platform   string  `json:"platform"`
 }
 
 type Artist struct {

@@ -70,6 +70,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 			Cover:      album.Image.Large,
 			Bitrate:    album.MaximumBitDepth,
 			SampleRate: float32(album.MaximumSamplingRate),
+			Platform:   "qobuz",
 		})
 	}
 
