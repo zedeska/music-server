@@ -215,6 +215,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		db.GetTrack(dbConn, elt.ID, platformeName)
 		err = db.AddTrackToPlaylist(dbConn, data.PlaylistID, elt.ID)
 		if err != nil {
 			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
