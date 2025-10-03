@@ -388,3 +388,14 @@ func DeleteTrackFromPlaylist(db *sql.DB, playlistID, trackID int) error {
 
 	return nil
 }
+
+func GetTrackIds(db *sql.DB, trackID int) ([]int, error) {
+	var qobuzID, deezerID int
+	err := db.QueryRow("SELECT IFNULL(idqobuz, 0), IFNULL(iddeezer, 0) FROM track WHERE id = ?", trackID).Scan(&qobuzID, &deezerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	trackIDs := []int{qobuzID, deezerID}
+	return trackIDs, nil
+}

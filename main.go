@@ -614,6 +614,22 @@ func downloadTrack(id int, platform string) (string, string, error) {
 		if err != nil {
 			return "", "", errors.New("failed to cache track")
 		}
+	} else if platform == "" {
+		var err error
+		ids, err := db.GetTrackIds(dbConn, id)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get track IDs: %w", err)
+		}
+		if ids[0] != 0 {
+			err = qobuz.Download(ids[0], MAX_QUALITY, file_path)
+		} else if ids[1] != 0 {
+			err = deezer.Download(ids[1], file_path)
+		} else {
+			return "", "", errors.New("no platform available for this track")
+		}
+		if err != nil {
+			return "", "", errors.New("failed to cache track")
+		}
 	}
 
 	return file_path, file_name, nil
