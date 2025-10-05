@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 )
 
@@ -506,20 +505,35 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for e, qobuz := range results_qobuz.Tracks {
-		for _, deezer := range results_deezer.Tracks {
-			if deezer.Album == qobuz.Album && deezer.Artist == qobuz.Artist && deezer.Title == qobuz.Title {
-				results_qobuz.Tracks = slices.Delete(results_qobuz.Tracks, e, e+1)
+	filteredQobuzTracks := make([]db.Track, 0, len(results_qobuz.Tracks))
+	for _, q := range results_qobuz.Tracks {
+		dup := false
+		for _, d := range results_deezer.Tracks {
+			if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
+				dup = true
+				break
 			}
 		}
-	}
-	for e, qobuz := range results_qobuz.Albums {
-		for _, deezer := range results_deezer.Albums {
-			if deezer.Title == qobuz.Title && deezer.Artist == qobuz.Artist {
-				results_qobuz.Albums = slices.Delete(results_qobuz.Albums, e, e+1)
-			}
+		if !dup {
+			filteredQobuzTracks = append(filteredQobuzTracks, q)
 		}
 	}
+	results_qobuz.Tracks = filteredQobuzTracks
+
+	filteredQobuzAlbums := make([]db.Album, 0, len(results_qobuz.Albums))
+	for _, q := range results_qobuz.Albums {
+		dup := false
+		for _, d := range results_deezer.Albums {
+			if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
+				dup = true
+				break
+			}
+		}
+		if !dup {
+			filteredQobuzAlbums = append(filteredQobuzAlbums, q)
+		}
+	}
+	results_qobuz.Albums = filteredQobuzAlbums
 
 	results_deezer.Tracks = append(results_deezer.Tracks, results_qobuz.Tracks...)
 	results_deezer.Albums = append(results_deezer.Albums, results_qobuz.Albums...)
