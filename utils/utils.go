@@ -17,7 +17,7 @@ func init() {
 }
 
 func Normalize(s string) string {
-	return strings.ToLower(strings.TrimSpace(strings.Join(strings.Fields(s), " ")))
+	return strings.ToLower(strings.TrimSpace(s))
 }
 
 // RandomChar returns a random alphanumeric character
