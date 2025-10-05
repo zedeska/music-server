@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/go-flac/go-flac/v2"
@@ -14,10 +13,6 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-}
-
-func Normalize(s string) string {
-	return strings.ToLower(strings.TrimSpace(s))
 }
 
 // RandomChar returns a random alphanumeric character
