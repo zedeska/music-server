@@ -518,7 +518,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			filteredQobuzTracks = append(filteredQobuzTracks, q)
 		}
 	}
-	results_qobuz.Tracks = filteredQobuzTracks
 
 	filteredQobuzAlbums := make([]db.Album, 0, len(results_qobuz.Albums))
 	for _, q := range results_qobuz.Albums {
@@ -533,10 +532,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			filteredQobuzAlbums = append(filteredQobuzAlbums, q)
 		}
 	}
-	results_qobuz.Albums = filteredQobuzAlbums
 
-	results_deezer.Tracks = append(results_deezer.Tracks, results_qobuz.Tracks...)
-	results_deezer.Albums = append(results_deezer.Albums, results_qobuz.Albums...)
+	results_deezer.Tracks = append(results_deezer.Tracks, filteredQobuzTracks...)
+	results_deezer.Albums = append(results_deezer.Albums, filteredQobuzAlbums...)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
