@@ -509,7 +509,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	for _, q := range results_qobuz.Tracks {
 		dup := false
 		for _, d := range results_deezer.Tracks {
-			if d.Album == q.Album && d.Artist == q.Artist && d.Title == q.Title {
+			if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
 				dup = true
 				break
 			}
@@ -523,7 +523,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	for _, q := range results_qobuz.Albums {
 		dup := false
 		for _, d := range results_deezer.Albums {
-			if d.Title == q.Title && d.Artist == q.Artist {
+			if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
 				dup = true
 				break
 			}
