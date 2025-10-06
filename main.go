@@ -420,7 +420,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath, err := play(id, platformName)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, "AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", http.StatusNotFound)
 		return
 	}
 
