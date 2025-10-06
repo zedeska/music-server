@@ -433,6 +433,10 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = db.AddToListen(dbConn, userId, id)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Add("Content-Type", "audio/flac")
 
