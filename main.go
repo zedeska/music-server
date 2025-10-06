@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	db "music-server/database"
 	"music-server/deezer"
 	"music-server/qobuz"
@@ -376,6 +377,8 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	platformStr := r.URL.Query().Get("p")
 	token := r.URL.Query().Get("token")
 
+	log.Println("Play request for track ID:", idStr, "on platform:", platformStr)
+
 	if idStr == "" {
 		http.Error(w, "Missing track ID", http.StatusBadRequest)
 		return
@@ -420,7 +423,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 
 	filePath, err := play(id, platformName)
 	if err != nil {
-		http.Error(w, "AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
