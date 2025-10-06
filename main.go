@@ -14,11 +14,17 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 )
 
 var SONG_FOLDER string
 var MAX_QUALITY string = "6"
 var dbConn *sql.DB
+
+var (
+	downloadMutex   = &sync.Mutex{}
+	activeDownloads = make(map[string]*sync.WaitGroup)
+)
 
 func main() {
 
@@ -621,37 +627,56 @@ func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
 
 func downloadTrack(id int, platform string) (string, string, error) {
 	file_name := utils.RandomString(50)
-	file_path := filepath.Join(SONG_FOLDER, file_name)
+	temp_path := filepath.Join(SONG_FOLDER, file_name+".tmp") // Temporary file
+	final_path := filepath.Join(SONG_FOLDER, file_name)       // Final file
+
+	var err error
 
 	if platform == "qobuz" {
-		err := qobuz.Download(id, MAX_QUALITY, file_path)
+		err = qobuz.Download(id, MAX_QUALITY, temp_path) // Download to temp file
 		if err != nil {
+			os.Remove(temp_path) // Clean up on failure
 			return "", "", errors.New("failed to cache track")
 		}
 	} else if platform == "deezer" {
-		err := deezer.Download(id, file_path)
+		err = deezer.Download(id, temp_path) // Download to temp file
 		if err != nil {
+			os.Remove(temp_path) // Clean up on failure
 			return "", "", errors.New("failed to cache track")
 		}
 	} else if platform == "" {
-		var err error
 		ids, err := db.GetTrackIds(dbConn, id)
 		if err != nil {
 			return "", "", fmt.Errorf("failed to get track IDs: %w", err)
 		}
 		if ids[0] != 0 {
-			err = qobuz.Download(ids[0], MAX_QUALITY, file_path)
+			err = qobuz.Download(ids[0], MAX_QUALITY, temp_path)
 		} else if ids[1] != 0 {
-			err = deezer.Download(ids[1], file_path)
+			err = deezer.Download(ids[1], temp_path)
 		} else {
 			return "", "", errors.New("no platform available for this track")
 		}
 		if err != nil {
+			os.Remove(temp_path) // Clean up on failure
 			return "", "", errors.New("failed to cache track")
 		}
 	}
 
-	return file_path, file_name, nil
+	// Verify the downloaded file exists and has content
+	if info, err := os.Stat(temp_path); err != nil || info.Size() == 0 {
+		os.Remove(temp_path)
+		return "", "", errors.New("downloaded file is empty or corrupted")
+	}
+
+	// Atomically move temp file to final location
+	err = os.Rename(temp_path, final_path)
+	if err != nil {
+		os.Remove(temp_path)
+		return "", "", fmt.Errorf("failed to finalize download: %w", err)
+	}
+
+	log.Printf("Successfully downloaded track to: %s", final_path)
+	return final_path, file_name, nil
 }
 
 func searchTrackFromID(id int, platform string) (db.Track, error) {
@@ -665,13 +690,47 @@ func searchTrackFromID(id int, platform string) (db.Track, error) {
 }
 
 func checkAndAddTrack(trackID int, platform string) error {
+	trackKey := fmt.Sprintf("%s_%d", platform, trackID)
+
+	downloadMutex.Lock()
+
+	// Check if this track is currently being downloaded
+	if wg, exists := activeDownloads[trackKey]; exists {
+		downloadMutex.Unlock()
+		// Wait for the download to complete
+		wg.Wait()
+		// Track should now exist, just return
+		return nil
+	}
+
+	// Check if track exists now (before starting download)
 	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID, platform)
+
+	if !needDownload {
+		downloadMutex.Unlock()
+		return nil
+	}
+
+	// This track needs downloading and no one else is downloading it
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	activeDownloads[trackKey] = wg
+	downloadMutex.Unlock()
+
+	// Ensure cleanup happens
+	defer func() {
+		downloadMutex.Lock()
+		delete(activeDownloads, trackKey)
+		downloadMutex.Unlock()
+		wg.Done()
+	}()
+
+	// Now do the actual download work
 	var file_path string
 	var file_name string
 	var err error
 
 	if !trackExists {
-
 		track, err := searchTrackFromID(trackID, platform)
 		if err != nil {
 			return fmt.Errorf("failed to search track: %w", err)
@@ -712,7 +771,7 @@ func checkAndAddTrack(trackID int, platform string) error {
 		if err != nil {
 			return fmt.Errorf("failed to update track in database: %w", err)
 		}
-
 	}
+
 	return nil
 }
