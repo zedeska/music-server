@@ -158,18 +158,16 @@ func GetAlbum(id int) (db.Album, error) {
 	temp_result_album, _ := res.Body.(*Deezer_album)
 
 	next := true
+	request_track := goaxios.GoAxios{
+		Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_album_track{},
+	}
 
 	for next {
-
-		request_track := goaxios.GoAxios{
-			Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
-			Method: "GET",
-			Headers: map[string]string{
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
-			},
-			ResponseStruct: &Deezer_album_track{},
-		}
-
 		res = request_track.RunRest()
 		if res.Error != nil {
 			return db.Album{}, errors.New("Error: " + res.Error.Error())
