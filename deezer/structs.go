@@ -269,5 +269,6 @@ type Deezer_album_track struct {
 		} `json:"artist"`
 		Type string `json:"type"`
 	} `json:"data"`
-	Total int `json:"total"`
+	Total int    `json:"total"`
+	Next  string `json:"next"`
 }

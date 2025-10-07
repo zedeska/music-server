@@ -138,6 +138,9 @@ func GetTrack(id int) (db.Track, error) {
 }
 
 func GetAlbum(id int) (db.Album, error) {
+	var tracks []db.Track
+	var album db.Album
+
 	request := goaxios.GoAxios{
 		Url:    API_URL + "album/" + strconv.Itoa(id),
 		Method: "GET",
@@ -154,37 +157,45 @@ func GetAlbum(id int) (db.Album, error) {
 
 	temp_result_album, _ := res.Body.(*Deezer_album)
 
-	request_track := goaxios.GoAxios{
-		Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
-		Method: "GET",
-		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
-		},
-		ResponseStruct: &Deezer_album_track{},
-	}
+	next := true
 
-	res = request_track.RunRest()
-	if res.Error != nil {
-		return db.Album{}, errors.New("Error: " + res.Error.Error())
-	}
+	for next {
 
-	temp_results_track, _ := res.Body.(*Deezer_album_track)
+		request_track := goaxios.GoAxios{
+			Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
+			Method: "GET",
+			Headers: map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			},
+			ResponseStruct: &Deezer_album_track{},
+		}
 
-	var tracks []db.Track
-	var album db.Album
+		res = request_track.RunRest()
+		if res.Error != nil {
+			return db.Album{}, errors.New("Error: " + res.Error.Error())
+		}
 
-	for _, track := range temp_results_track.Data {
-		tracks = append(tracks, db.Track{
-			ID:          int(track.ID),
-			Title:       track.Title,
-			Artist:      track.Artist.Name,
-			ArtistID:    track.Artist.ID,
-			Album:       temp_result_album.Title,
-			Duration:    track.Duration,
-			Cover:       temp_result_album.CoverMedium,
-			TrackNumber: track.TrackPosition,
-			Platform:    "deezer",
-		})
+		temp_results_track, _ := res.Body.(*Deezer_album_track)
+
+		for _, track := range temp_results_track.Data {
+			tracks = append(tracks, db.Track{
+				ID:          int(track.ID),
+				Title:       track.Title,
+				Artist:      track.Artist.Name,
+				ArtistID:    track.Artist.ID,
+				Album:       temp_result_album.Title,
+				Duration:    track.Duration,
+				Cover:       temp_result_album.CoverMedium,
+				TrackNumber: track.TrackPosition,
+				Platform:    "deezer",
+			})
+		}
+
+		if temp_results_track.Next != "" {
+			request_track.Url = temp_results_track.Next
+		} else {
+			next = false
+		}
 	}
 
 	album = db.Album{
@@ -194,7 +205,7 @@ func GetAlbum(id int) (db.Album, error) {
 		ArtistID:   temp_result_album.Artist.ID,
 		Cover:      temp_result_album.CoverMedium,
 		Tracks:     tracks,
-		TrackCount: temp_results_track.Total,
+		TrackCount: temp_result_album.NbTracks,
 		Platform:   "deezer",
 	}
 
