@@ -152,33 +152,49 @@ func GetAlbum(id int) (db.Album, error) {
 		return db.Album{}, errors.New("Error: " + res.Error.Error())
 	}
 
-	temp_results, _ := res.Body.(*Deezer_album)
+	temp_result_album, _ := res.Body.(*Deezer_album)
+
+	request_track := goaxios.GoAxios{
+		Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_album_track{},
+	}
+
+	res = request_track.RunRest()
+	if res.Error != nil {
+		return db.Album{}, errors.New("Error: " + res.Error.Error())
+	}
+
+	temp_results_track, _ := res.Body.(*Deezer_album_track)
 
 	var tracks []db.Track
 	var album db.Album
 
-	for e, track := range temp_results.Tracks.Data {
+	for _, track := range temp_results_track.Data {
 		tracks = append(tracks, db.Track{
 			ID:          int(track.ID),
 			Title:       track.Title,
 			Artist:      track.Artist.Name,
 			ArtistID:    track.Artist.ID,
-			Album:       temp_results.Title,
+			Album:       temp_result_album.Title,
 			Duration:    track.Duration,
-			Cover:       temp_results.CoverMedium,
-			TrackNumber: e + 1,
+			Cover:       temp_result_album.CoverMedium,
+			TrackNumber: track.TrackPosition,
 			Platform:    "deezer",
 		})
 	}
 
 	album = db.Album{
-		ID:         strconv.Itoa(temp_results.ID),
-		Title:      temp_results.Title,
-		Artist:     temp_results.Artist.Name,
-		ArtistID:   temp_results.Artist.ID,
-		Cover:      temp_results.CoverMedium,
+		ID:         strconv.Itoa(temp_result_album.ID),
+		Title:      temp_result_album.Title,
+		Artist:     temp_result_album.Artist.Name,
+		ArtistID:   temp_result_album.Artist.ID,
+		Cover:      temp_result_album.CoverMedium,
 		Tracks:     tracks,
-		TrackCount: temp_results.NbTracks,
+		TrackCount: temp_results_track.Total,
 		Platform:   "deezer",
 	}
 

@@ -242,3 +242,32 @@ type Deezer_album struct {
 		} `json:"data"`
 	} `json:"tracks"`
 }
+
+type Deezer_album_track struct {
+	Data []struct {
+		ID                    int64  `json:"id"`
+		Readable              bool   `json:"readable"`
+		Title                 string `json:"title"`
+		TitleShort            string `json:"title_short"`
+		TitleVersion          string `json:"title_version"`
+		Isrc                  string `json:"isrc"`
+		Link                  string `json:"link"`
+		Duration              int    `json:"duration"`
+		TrackPosition         int    `json:"track_position"`
+		DiskNumber            int    `json:"disk_number"`
+		Rank                  int    `json:"rank"`
+		ExplicitLyrics        bool   `json:"explicit_lyrics"`
+		ExplicitContentLyrics int    `json:"explicit_content_lyrics"`
+		ExplicitContentCover  int    `json:"explicit_content_cover"`
+		Preview               string `json:"preview"`
+		Md5Image              string `json:"md5_image"`
+		Artist                struct {
+			ID        int    `json:"id"`
+			Name      string `json:"name"`
+			Tracklist string `json:"tracklist"`
+			Type      string `json:"type"`
+		} `json:"artist"`
+		Type string `json:"type"`
+	} `json:"data"`
+	Total int `json:"total"`
+}
