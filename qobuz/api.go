@@ -175,6 +175,7 @@ func GetAlbum(id string) (db.Album, error) {
 		SampleRate: float32(temp_results.MaximumSamplingRate),
 		Tracks:     tracks,
 		TrackCount: temp_results.TracksCount,
+		Platform:   "qobuz",
 	}
 
 	return album, nil
