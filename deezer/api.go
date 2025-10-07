@@ -5,6 +5,7 @@ import (
 	db "music-server/database"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/opensaucerer/goaxios"
 )
@@ -157,7 +158,6 @@ func GetAlbum(id int) (db.Album, error) {
 
 	temp_result_album, _ := res.Body.(*Deezer_album)
 
-	next := true
 	request_track := goaxios.GoAxios{
 		Url:    API_URL + "album/" + strconv.Itoa(id) + "/tracks",
 		Method: "GET",
@@ -167,7 +167,7 @@ func GetAlbum(id int) (db.Album, error) {
 		ResponseStruct: &Deezer_album_track{},
 	}
 
-	for next {
+	for {
 		res = request_track.RunRest()
 		if res.Error != nil {
 			return db.Album{}, errors.New("Error: " + res.Error.Error())
@@ -192,8 +192,9 @@ func GetAlbum(id int) (db.Album, error) {
 		if temp_results_track.Next != "" {
 			request_track.Url = temp_results_track.Next
 		} else {
-			next = false
+			break
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	album = db.Album{
