@@ -81,7 +81,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 			ArtistID: track.Artist.ID,
 			Album:    track.Album.Title,
 			Duration: track.Duration,
-			Cover:    track.Album.CoverMedium,
+			Cover:    track.Album.CoverXl,
 			Platform: "deezer",
 		})
 	}
@@ -92,7 +92,7 @@ func Search(query string) (*db.Custom_search_result, error) {
 			Title:    album.Title,
 			Artist:   album.Artist.Name,
 			ArtistID: album.Artist.ID,
-			Cover:    album.CoverMedium,
+			Cover:    album.CoverXl,
 			Platform: "deezer",
 		})
 	}
@@ -126,7 +126,7 @@ func GetTrack(id int) (db.Track, error) {
 		ArtistID:    temp_result.Artist.ID,
 		Album:       temp_result.Album.Title,
 		Duration:    temp_result.Duration,
-		Cover:       temp_result.Album.CoverMedium,
+		Cover:       temp_result.Album.CoverXl,
 		Platform:    "deezer",
 		Bitrate:     16,
 		SampleRate:  44.1,
@@ -183,7 +183,7 @@ func GetAlbum(id int) (db.Album, error) {
 			ArtistID:    track.Artist.ID,
 			Album:       temp_result_album.Title,
 			Duration:    track.Duration,
-			Cover:       temp_result_album.CoverMedium,
+			Cover:       temp_result_album.CoverXl,
 			TrackNumber: track.TrackPosition,
 			Platform:    "deezer",
 		})
@@ -194,7 +194,7 @@ func GetAlbum(id int) (db.Album, error) {
 		Title:      temp_result_album.Title,
 		Artist:     temp_result_album.Artist.Name,
 		ArtistID:   temp_result_album.Artist.ID,
-		Cover:      temp_result_album.CoverMedium,
+		Cover:      temp_result_album.CoverXl,
 		Tracks:     tracks,
 		TrackCount: temp_result_album.NbTracks,
 		Platform:   "deezer",

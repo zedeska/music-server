@@ -156,7 +156,7 @@ func GetAlbum(id string) (db.Album, error) {
 			ArtistID:    track.Performer.ID,
 			Album:       temp_results.Title,
 			Duration:    track.Duration,
-			Cover:       temp_results.Image.Small,
+			Cover:       temp_results.Image.Large,
 			Bitrate:     track.MaximumBitDepth,
 			SampleRate:  float32(track.MaximumSamplingRate),
 			TrackNumber: track.TrackNumber,
