@@ -202,3 +202,89 @@ func GetAlbum(id int) (db.Album, error) {
 
 	return album, nil
 }
+
+func GetArtist(id string) (db.Artist, error) {
+	request_artist := goaxios.GoAxios{
+		Url:    API_URL + "artist/" + id,
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_artist{},
+	}
+
+	res := request_artist.RunRest()
+	if res.Error != nil || res.Response.StatusCode != 200 {
+		return db.Artist{}, errors.New("Error fetching artist")
+	}
+
+	temp_results_artist, _ := res.Body.(*Deezer_artist)
+
+	request_top := goaxios.GoAxios{
+		Url:    API_URL + "artist/" + id + "/top",
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_artist_top{},
+	}
+
+	res = request_top.RunRest()
+	if res.Error != nil || res.Response.StatusCode != 200 {
+		return db.Artist{}, errors.New("Error fetching artist")
+	}
+
+	temp_results_artist_top, _ := res.Body.(*Deezer_artist_top)
+
+	request_album := goaxios.GoAxios{
+		Url:    API_URL + "artist/" + id + "/albums",
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_artist_albums{},
+	}
+
+	res = request_album.RunRest()
+	if res.Error != nil || res.Response.StatusCode != 200 {
+		return db.Artist{}, errors.New("Error fetching artist")
+	}
+
+	temp_results_artist_albums, _ := res.Body.(*Deezer_artist_albums)
+
+	var tracks []db.Track
+	var albums []db.Album
+
+	for e, track := range temp_results_artist_top.Data {
+		tracks = append(tracks, db.Track{
+			ID:          int(track.ID),
+			Title:       track.Title,
+			Artist:      track.Artist.Name,
+			ArtistID:    track.Artist.ID,
+			Album:       track.Album.Title,
+			Duration:    track.Duration,
+			Cover:       track.Album.CoverXl,
+			TrackNumber: e + 1,
+		})
+	}
+
+	for _, album := range temp_results_artist_albums.Data {
+		albums = append(albums, db.Album{
+			ID:       strconv.Itoa(album.ID),
+			Title:    album.Title,
+			Artist:   temp_results_artist.Name,
+			ArtistID: temp_results_artist.ID,
+			Cover:    album.CoverXl,
+		})
+	}
+
+	var artist db.Artist = db.Artist{
+		ID:          temp_results_artist.ID,
+		Name:        temp_results_artist.Name,
+		Image:       temp_results_artist.PictureXl,
+		TopTracks:   tracks,
+		LastRelease: albums,
+	}
+
+	return artist, nil
+}

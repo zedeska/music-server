@@ -327,15 +327,45 @@ func playlistHandler(w http.ResponseWriter, r *http.Request) {
 
 func artistHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
+	platformStr := r.URL.Query().Get("p")
+
 	if idStr == "" {
 		http.Error(w, "Missing artist ID", http.StatusBadRequest)
 		return
 	}
 
-	artist, err := qobuz.GetArtist(idStr)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+	if platformStr == "" {
+		http.Error(w, "Missing platform parameter", http.StatusBadRequest)
 		return
+	}
+
+	platform, err := strconv.Atoi(platformStr)
+	if err != nil {
+		http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
+		return
+	}
+
+	platformName, err := utils.GetPlatformName(platform)
+	if err != nil {
+		http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
+		return
+	}
+
+	var artist db.Artist
+
+	switch platformName {
+	case "deezer":
+		artist, err = deezer.GetArtist(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+	case "qobuz":
+		artist, err = qobuz.GetArtist(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
 	}
 
 	w.Header().Add("Content-Type", "application/json")
