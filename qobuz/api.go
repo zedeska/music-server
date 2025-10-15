@@ -218,6 +218,7 @@ func GetArtist(id string) (db.Artist, error) {
 			Duration:    track.Duration,
 			Cover:       track.Album.Image.Large,
 			TrackNumber: e + 1,
+			Platform:    "qobuz",
 		})
 	}
 
@@ -228,6 +229,7 @@ func GetArtist(id string) (db.Artist, error) {
 			Artist:   album.Artist.Name.Display,
 			ArtistID: album.Artist.ID,
 			Cover:    album.Image.Large,
+			Platform: "qobuz",
 		})
 	}
 
@@ -238,6 +240,7 @@ func GetArtist(id string) (db.Artist, error) {
 			Artist:   album.Artist.Name.Display,
 			ArtistID: album.Artist.ID,
 			Cover:    album.Image.Large,
+			Platform: "qobuz",
 		})
 	}
 

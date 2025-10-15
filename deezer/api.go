@@ -265,6 +265,7 @@ func GetArtist(id string) (db.Artist, error) {
 			Duration:    track.Duration,
 			Cover:       track.Album.CoverXl,
 			TrackNumber: e + 1,
+			Platform:    "deezer",
 		})
 	}
 
@@ -275,6 +276,7 @@ func GetArtist(id string) (db.Artist, error) {
 			Artist:   temp_results_artist.Name,
 			ArtistID: temp_results_artist.ID,
 			Cover:    album.CoverXl,
+			Platform: "deezer",
 		})
 	}
 
