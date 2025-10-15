@@ -175,6 +175,9 @@ func GetAlbum(id int) (db.Album, error) {
 
 	temp_results_track, _ := res.Body.(*Deezer_album_track)
 
+	release_date := strings.Split(temp_result_album.ReleaseDate, "-")
+	year, _ := strconv.Atoi(release_date[0])
+
 	for _, track := range temp_results_track.Data {
 		tracks = append(tracks, db.Track{
 			ID:          int(track.ID),
@@ -185,6 +188,7 @@ func GetAlbum(id int) (db.Album, error) {
 			Duration:    track.Duration,
 			Cover:       temp_result_album.CoverXl,
 			TrackNumber: track.TrackPosition,
+			Year:        year,
 			Platform:    "deezer",
 		})
 	}
@@ -197,6 +201,7 @@ func GetAlbum(id int) (db.Album, error) {
 		Cover:      temp_result_album.CoverXl,
 		Tracks:     tracks,
 		TrackCount: temp_result_album.NbTracks,
+		Year:       year,
 		Platform:   "deezer",
 	}
 
