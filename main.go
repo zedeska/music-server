@@ -454,7 +454,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath, err := play(id, platformName)
+	filePath, new_ID, err := play(id, platformName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -465,7 +465,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	err = db.AddToListen(dbConn, userId, id)
+	err = db.AddToListen(dbConn, userId, new_ID)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -631,18 +631,18 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(album.ToJSON())
 }
 
-func play(id int, platform string) (string, error) {
+func play(id int, platform string) (string, int, error) {
 	err := checkAndAddTrack(id, platform)
 	if err != nil {
-		return "", fmt.Errorf("failed to check and add track: %w", err)
+		return "", 0, fmt.Errorf("failed to check and add track: %w", err)
 	}
 
 	track, err := db.GetTrack(dbConn, id, platform)
 	if err != nil {
-		return "", fmt.Errorf("failed to get track: %w", err)
+		return "", 0, fmt.Errorf("failed to get track: %w", err)
 	}
 
-	return track.Path, nil
+	return track.Path, track.ID, nil
 }
 
 func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
