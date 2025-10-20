@@ -534,51 +534,48 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	/*
-		results_qobuz, err := qobuz.Search(query)
-		if err != nil {
-			http.Error(w, "Invalid search query", http.StatusBadRequest)
-			return
-		}
-	*/
+	results_qobuz, err := qobuz.Search(query)
+	if err != nil {
+		http.Error(w, "Invalid search query", http.StatusBadRequest)
+		return
+	}
+
 	results_deezer, err := deezer.Search(query)
 	if err != nil {
 		http.Error(w, "Invalid search query", http.StatusBadRequest)
 		return
 	}
 
-	/*
-		filteredQobuzTracks := make([]db.Track, 0, len(results_qobuz.Tracks))
-		for _, q := range results_qobuz.Tracks {
-			dup := false
-			for _, d := range results_deezer.Tracks {
-				if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
-					dup = true
-					break
-				}
-			}
-			if !dup {
-				filteredQobuzTracks = append(filteredQobuzTracks, q)
+	filteredQobuzTracks := make([]db.Track, 0, len(results_qobuz.Tracks))
+	for _, q := range results_qobuz.Tracks {
+		dup := false
+		for _, d := range results_deezer.Tracks {
+			if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
+				dup = true
+				break
 			}
 		}
+		if !dup {
+			filteredQobuzTracks = append(filteredQobuzTracks, q)
+		}
+	}
 
-		filteredQobuzAlbums := make([]db.Album, 0, len(results_qobuz.Albums))
-		for _, q := range results_qobuz.Albums {
-			dup := false
-			for _, d := range results_deezer.Albums {
-				if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
-					dup = true
-					break
-				}
-			}
-			if !dup {
-				filteredQobuzAlbums = append(filteredQobuzAlbums, q)
+	filteredQobuzAlbums := make([]db.Album, 0, len(results_qobuz.Albums))
+	for _, q := range results_qobuz.Albums {
+		dup := false
+		for _, d := range results_deezer.Albums {
+			if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
+				dup = true
+				break
 			}
 		}
+		if !dup {
+			filteredQobuzAlbums = append(filteredQobuzAlbums, q)
+		}
+	}
 
-		results_deezer.Tracks = append(results_deezer.Tracks, filteredQobuzTracks...)
-		results_deezer.Albums = append(results_deezer.Albums, filteredQobuzAlbums...)
-	*/
+	results_deezer.Tracks = append(results_deezer.Tracks, filteredQobuzTracks...)
+	results_deezer.Albums = append(results_deezer.Albums, filteredQobuzAlbums...)
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -664,7 +661,7 @@ func downloadTrack(id int, platform string) (string, string, error) {
 	var err error
 
 	if platform == "qobuz" {
-		err = qobuz.Download(id, MAX_QUALITY, temp_path) // Download to temp file
+		err = qobuz.Download(id, temp_path) // Download to temp file
 		if err != nil {
 			os.Remove(temp_path) // Clean up on failure
 			return "", "", errors.New("failed to cache track")
@@ -681,7 +678,7 @@ func downloadTrack(id int, platform string) (string, string, error) {
 			return "", "", fmt.Errorf("failed to get track IDs: %w", err)
 		}
 		if ids[0] != 0 {
-			err = qobuz.Download(ids[0], MAX_QUALITY, temp_path)
+			err = qobuz.Download(ids[0], temp_path)
 		} else if ids[1] != 0 {
 			err = deezer.Download(ids[1], temp_path)
 		} else {
