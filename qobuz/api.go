@@ -46,6 +46,9 @@ func Search(query string) (*db.Custom_search_result, error) {
 		if track.Version != nil {
 			track.Title = strings.TrimSpace(track.Title) + " (" + track.Version.(string) + ")"
 		}
+		if track.Album.Version != nil {
+			track.Album.Title = strings.TrimSpace(track.Album.Title) + " (" + track.Album.Version.(string) + ")"
+		}
 		results.Tracks = append(results.Tracks, db.Track{
 			ID:         track.ID,
 			Title:      track.Title,
@@ -61,6 +64,9 @@ func Search(query string) (*db.Custom_search_result, error) {
 	}
 
 	for _, album := range temp_results.Albums.Items {
+		if album.Version != nil {
+			album.Title = strings.TrimSpace(album.Title) + " (" + album.Version.(string) + ")"
+		}
 		results.Albums = append(results.Albums, db.Album{
 			ID:         album.ID,
 			Title:      album.Title,
