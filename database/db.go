@@ -33,7 +33,7 @@ func InitDB(db *sql.DB) {
 			album VARCHAR(100),
 			year INTEGER,
 			duration INTEGER,
-			cover TEXT,
+			cover TEXT
 		);
 
 		CREATE TABLE IF NOT EXISTS quality (
