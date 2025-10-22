@@ -122,3 +122,14 @@ func GetPlatformName(platform int) (string, error) {
 		return "Unknown", fmt.Errorf("unknown platform: %d", platform)
 	}
 }
+
+func GetQualityLevel(quality int) QualityLevel {
+	switch quality {
+	case 1:
+		return QualityLevel{Bitrate: 320, SampleRate: 44.1}
+	case 2:
+		return QualityLevel{Bitrate: 16, SampleRate: 44.1}
+	default:
+		return QualityLevel{}
+	}
+}

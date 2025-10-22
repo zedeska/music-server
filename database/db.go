@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"music-server/utils"
-	"os"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -29,16 +28,20 @@ func InitDB(db *sql.DB) {
 			idqobuz INTEGER,
 			iddeezer INTEGER,
 			title VARCHAR(100),
-			path TEXT,
-			filename VARCHAR(50),
 			artist VARCHAR(100),
 			artist_id INTEGER,
 			album VARCHAR(100),
 			year INTEGER,
 			duration INTEGER,
 			cover TEXT,
-			sample_rate INTEGER,
-			bitrate INTEGER
+		);
+
+		CREATE TABLE IF NOT EXISTS quality (
+			id INTEGER,
+			path TEXT,
+			bitrate INTEGER,
+			sample_rate FLOAT,
+			FOREIGN KEY (id) REFERENCES track(id) ON DELETE CASCADE
 		);
 
 		CREATE TABLE IF NOT EXISTS playlist (
@@ -46,13 +49,6 @@ func InitDB(db *sql.DB) {
 			id_user INTEGER,
 			name VARCHAR(50),
 			FOREIGN KEY (id_user) REFERENCES user(id_user)
-		);
-
-		CREATE TABLE IF NOT EXISTS playlist (
-			id_playlist INTEGER PRIMARY KEY AUTOINCREMENT,
-			id_user INTEGER,
-			name VARCHAR(50),
-			FOREIGN KEY (id_user) REFERENCES user(id)
 		);
 
 		CREATE TABLE IF NOT EXISTS in_playlist (
@@ -79,68 +75,77 @@ func InitDB(db *sql.DB) {
 	fmt.Println("Database initialized successfully")
 }
 
-func CheckIfTrackExists(db *sql.DB, id int, platform string) (bool, bool) {
-	var track Track
+func CheckIfTrackExists(db *sql.DB, id int, platform string, quality ...utils.QualityLevel) (bool, bool) {
+	var trackID int
 
-	err := db.QueryRow(fmt.Sprintf("SELECT id, IFNULL(path, '') FROM track WHERE %s = ?", "id"+platform), id).Scan(&track.ID, &track.Path)
-	if track.ID == 0 || err == sql.ErrNoRows {
+	err := db.QueryRow(fmt.Sprintf("SELECT id FROM track WHERE %s = ?", "id"+platform), id).Scan(&trackID)
+	if trackID == 0 || err == sql.ErrNoRows {
 		return false, true
-	} else {
-		if track.Path == "" {
+	} else if len(quality) > 0 {
+		var path string
+		err := db.QueryRow("SELECT IFNULL(path, '') FROM quality WHERE id = ? AND bitrate = ?", trackID, quality[0].Bitrate).Scan(&path)
+		if err == sql.ErrNoRows || path == "" {
 			return true, true
-		}
-		_, err := os.Stat(track.Path)
-		if errors.Is(err, os.ErrNotExist) {
-			db.Exec("DELETE FROM track WHERE id = ?", track.ID)
-			return false, true
 		}
 	}
 	return true, false
 }
 
-func CheckIfTrackExistsByArtistAndAlbum(db *sql.DB, id int, platform string, artist string, album string, track_title string) (bool, bool) {
-	var track Track
-	err := db.QueryRow("SELECT id, IFNULL(path, '') FROM track WHERE artist = ? AND album = ? AND title = ?", artist, album, track_title).Scan(&track.ID, &track.Path)
-	if track.ID == 0 || err == sql.ErrNoRows {
+func CheckIfTrackExistsByArtistAndAlbum(db *sql.DB, id int, platform string, artist string, album string, track_title string, quality ...utils.QualityLevel) (bool, bool) {
+	var trackId int
+	err := db.QueryRow("SELECT id FROM track WHERE artist = ? AND album = ? AND title = ?", artist, album, track_title).Scan(&trackId)
+	if trackId == 0 || err == sql.ErrNoRows {
 		return false, true
-	} else {
-		db.Exec(fmt.Sprintf("UPDATE track SET %s = ? WHERE id = ?", "id"+platform), id, track.ID)
-		if track.Path == "" {
+	} else if len(quality) > 0 {
+		db.Exec(fmt.Sprintf("UPDATE track SET %s = ? WHERE id = ?", "id"+platform), id, trackId)
+		var path string
+		err := db.QueryRow("SELECT IFNULL(path, '') FROM quality WHERE id = ? AND bitrate = ?", trackId, quality[0].Bitrate).Scan(&path)
+		if err == sql.ErrNoRows || path == "" {
 			return true, true
-		} else {
-			_, err := os.Stat(track.Path)
-			if errors.Is(err, os.ErrNotExist) {
-				db.Exec("DELETE FROM track WHERE id = ?", track.ID)
-				return false, true
-			}
 		}
 	}
 	return true, false
 }
 
-func GetTrack(db *sql.DB, id int, platformName string) (*Track, error) {
+func GetTrack(db *sql.DB, id int, platformName string, quality ...utils.QualityLevel) (*Track, error) {
 	var track Track
-	err := db.QueryRow(fmt.Sprintf("SELECT id, title, IFNULL(path, ''), IFNULL(filename, ''), artist, artist_id, album, year, duration, cover, sample_rate, bitrate FROM track WHERE %s = ?", "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Path, &track.Filename, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate)
+	err := db.QueryRow(fmt.Sprintf("SELECT id, title, artist, artist_id, album, year, duration, cover FROM track WHERE %s = ?", "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
-
+	if len(quality) > 0 {
+		err = db.QueryRow("SELECT path, bitrate, sample_rate FROM quality WHERE id = ? AND bitrate = ?", track.ID, quality[0].Bitrate).Scan(&track.Path, &track.Bitrate, &track.SampleRate)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute query: %w", err)
+		}
+	}
 	return &track, nil
 }
 
 func AddTrack(db *sql.DB, track Track) error {
-	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, path, filename, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
-		track.ID, track.Title, track.Path, track.Filename, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
+	res, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, artist_id, album, year, duration, cover) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
+		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover)
 	if err != nil {
 		return fmt.Errorf("failed to insert track: %w", err)
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert id: %w", err)
+	}
+
+	_, err = db.Exec("INSERT INTO quality (id, path, bitrate, sample_rate) VALUES (?, ?, ?, ?)",
+		id, track.Path, track.Bitrate, track.SampleRate)
+	if err != nil {
+		return fmt.Errorf("failed to insert quality: %w", err)
 	}
 
 	return nil
 }
 
 func AddPartialTrack(db *sql.DB, track Track) error {
-	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, artist_id, album, year, duration, cover, sample_rate, bitrate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
-		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover, track.SampleRate, track.Bitrate)
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, artist_id, album, year, duration, cover) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform),
+		track.ID, track.Title, track.Artist, track.ArtistID, track.Album, track.Year, track.Duration, track.Cover)
 	if err != nil {
 		return fmt.Errorf("failed to insert partial track: %w", err)
 	}
@@ -148,12 +153,19 @@ func AddPartialTrack(db *sql.DB, track Track) error {
 	return nil
 }
 
-func UpdateTrackPathAndFilename(db *sql.DB, id int, file_path string, file_name string) error {
-	_, err := db.Exec("UPDATE track SET filename = ?, path = ? WHERE id = ?", file_name, file_path, id)
+func UpdateTrackPathAndFilename(db *sql.DB, id int, platform string, quality utils.QualityLevel, file_path string) error {
+	var TrackId int
+	err := db.QueryRow(fmt.Sprintf("SELECT id FROM track WHERE %s = ?", "id"+platform), id).Scan(&TrackId)
 	if err != nil {
 		return fmt.Errorf("failed to update track: %w", err)
 	}
-
+	_, err = db.Exec("UPDATE quality SET path = ? WHERE id = ? AND bitrate = ?", file_path, TrackId, quality.Bitrate)
+	if err != nil {
+		_, err := db.Exec("INSERT INTO quality (id, path, bitrate, sample_rate) VALUES (?, ?, ?, ?)", TrackId, file_path, quality.Bitrate, quality.SampleRate)
+		if err != nil {
+			return fmt.Errorf("failed to insert quality: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -236,7 +248,7 @@ func GetUserID(db *sql.DB, token string) (int, error) {
 }
 
 func GetListenedTracks(db *sql.DB, userID, limit int) ([]byte, error) {
-	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.artist_id, t.album, t.year, t.duration, t.cover, t.sample_rate, t.bitrate FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
+	rows, err := db.Query("SELECT DISTINCT(t.id), t.title, t.artist, t.artist_id, t.album, t.year, t.duration, t.cover FROM listened l JOIN track t ON l.id_track = t.id WHERE l.id_user = ? ORDER BY l.timestamp DESC LIMIT ?", userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
@@ -248,7 +260,7 @@ func GetListenedTracks(db *sql.DB, userID, limit int) ([]byte, error) {
 
 	for rows.Next() {
 		var track Track
-		if err := rows.Scan(&track.ID, &track.Title, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.SampleRate, &track.Bitrate); err != nil {
+		if err := rows.Scan(&track.ID, &track.Title, &track.Artist, &track.ArtistID, &track.Album, &track.Year, &track.Duration, &track.Cover); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		tracks.Data = append(tracks.Data, track)
@@ -389,9 +401,9 @@ func DeleteTrackFromPlaylist(db *sql.DB, playlistID, trackID int) error {
 	return nil
 }
 
-func GetTrackIds(db *sql.DB, trackID int) ([]int, error) {
+func GetTrackIds(db *sql.DB, trackID int, quality utils.QualityLevel) ([]int, error) {
 	var qobuzID, deezerID int
-	err := db.QueryRow("SELECT IFNULL(idqobuz, 0), IFNULL(iddeezer, 0) FROM track WHERE id = ?", trackID).Scan(&qobuzID, &deezerID)
+	err := db.QueryRow("SELECT IFNULL(idqobuz, 0), IFNULL(iddeezer, 0) FROM track WHERE id = ? AND bitrate = ?", trackID, quality.Bitrate).Scan(&qobuzID, &deezerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}

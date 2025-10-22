@@ -411,6 +411,12 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	platformStr := r.URL.Query().Get("p")
 	token := r.URL.Query().Get("token")
+	qualityStr := r.URL.Query().Get("q")
+
+	if qualityStr == "" {
+		http.Error(w, "Missing quality", http.StatusBadRequest)
+		return
+	}
 
 	if idStr == "" {
 		http.Error(w, "Missing track ID", http.StatusBadRequest)
@@ -444,6 +450,14 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	qualityInt, err := strconv.Atoi(qualityStr)
+	if err != nil {
+		http.Error(w, "Invalid quality parameter", http.StatusBadRequest)
+		return
+	}
+
+	qualityLevel := utils.GetQualityLevel(qualityInt)
+
 	tokenValid, err := db.CheckToken(dbConn, token)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -454,7 +468,7 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath, new_ID, err := play(id, platformName)
+	filePath, new_ID, err := play(id, platformName, qualityLevel)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -471,7 +485,18 @@ func playHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Add("Content-Type", "audio/flac")
+	var contentType string
+
+	switch qualityLevel.Bitrate {
+	case 16:
+		contentType = "audio/flac"
+	case 320:
+		contentType = "audio/mpeg"
+	default:
+		contentType = "application/octet-stream"
+	}
+
+	w.Header().Add("Content-Type", contentType)
 
 	http.ServeFile(w, r, filePath)
 }
@@ -628,13 +653,13 @@ func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(album.ToJSON())
 }
 
-func play(id int, platform string) (string, int, error) {
-	err := checkAndAddTrack(id, platform)
+func play(id int, platform string, quality utils.QualityLevel) (string, int, error) {
+	err := checkAndAddTrack(id, platform, quality)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to check and add track: %w", err)
 	}
 
-	track, err := db.GetTrack(dbConn, id, platform)
+	track, err := db.GetTrack(dbConn, id, platform, quality)
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to get track: %w", err)
 	}
@@ -653,7 +678,7 @@ func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
 	return nil
 }
 
-func downloadTrack(id int, platform string) (string, string, error) {
+func downloadTrack(id int, platform string, quality utils.QualityLevel) (string, error) {
 	file_name := utils.RandomString(50)
 	temp_path := filepath.Join(SONG_FOLDER, file_name+".tmp") // Temporary file
 	final_path := filepath.Join(SONG_FOLDER, file_name)       // Final file
@@ -661,48 +686,48 @@ func downloadTrack(id int, platform string) (string, string, error) {
 	var err error
 
 	if platform == "qobuz" {
-		err = qobuz.Download(id, temp_path) // Download to temp file
+		err = qobuz.Download(id, temp_path, quality) // Download to temp file
 		if err != nil {
 			os.Remove(temp_path) // Clean up on failure
-			return "", "", errors.New("failed to cache track")
+			return "", errors.New("failed to cache track")
 		}
 	} else if platform == "deezer" {
-		err = deezer.Download(id, temp_path) // Download to temp file
+		err = deezer.Download(id, temp_path, quality) // Download to temp file
 		if err != nil {
 			os.Remove(temp_path) // Clean up on failure
-			return "", "", errors.New("failed to cache track")
+			return "", errors.New("failed to cache track")
 		}
 	} else if platform == "" {
-		ids, err := db.GetTrackIds(dbConn, id)
+		ids, err := db.GetTrackIds(dbConn, id, quality)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to get track IDs: %w", err)
+			return "", fmt.Errorf("failed to get track IDs: %w", err)
 		}
 		if ids[0] != 0 {
-			err = qobuz.Download(ids[0], temp_path)
+			err = qobuz.Download(ids[0], temp_path, quality)
 		} else if ids[1] != 0 {
-			err = deezer.Download(ids[1], temp_path)
+			err = deezer.Download(ids[1], temp_path, quality)
 		} else {
-			return "", "", errors.New("no platform available for this track")
+			return "", errors.New("no platform available for this track")
 		}
 		if err != nil {
 			os.Remove(temp_path) // Clean up on failure
-			return "", "", errors.New("failed to cache track")
+			return "", errors.New("failed to cache track")
 		}
 	}
 
 	// Verify the downloaded file exists and has content
 	if info, err := os.Stat(temp_path); err != nil || info.Size() == 0 {
 		os.Remove(temp_path)
-		return "", "", errors.New("downloaded file is empty or corrupted")
+		return "", errors.New("downloaded file is empty or corrupted")
 	}
 
 	// Atomically move temp file to final location
 	err = os.Rename(temp_path, final_path)
 	if err != nil {
 		os.Remove(temp_path)
-		return "", "", fmt.Errorf("failed to finalize download: %w", err)
+		return "", fmt.Errorf("failed to finalize download: %w", err)
 	}
-	return final_path, file_name, nil
+	return final_path, nil
 }
 
 func searchTrackFromID(id int, platform string) (db.Track, error) {
@@ -715,8 +740,8 @@ func searchTrackFromID(id int, platform string) (db.Track, error) {
 	return db.Track{}, fmt.Errorf("track not found")
 }
 
-func checkAndAddTrack(trackID int, platform string) error {
-	trackKey := fmt.Sprintf("%s_%d", platform, trackID)
+func checkAndAddTrack(trackID int, platform string, quality utils.QualityLevel) error {
+	trackKey := fmt.Sprintf("%s_%d_%d_%f", platform, trackID, quality.Bitrate, quality.SampleRate)
 
 	downloadMutex.Lock()
 
@@ -730,7 +755,7 @@ func checkAndAddTrack(trackID int, platform string) error {
 	}
 
 	// Check if track exists now (before starting download)
-	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID, platform)
+	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID, platform, quality)
 
 	if !needDownload {
 		downloadMutex.Unlock()
@@ -753,7 +778,6 @@ func checkAndAddTrack(trackID int, platform string) error {
 
 	// Now do the actual download work
 	var file_path string
-	var file_name string
 	var err error
 
 	if !trackExists {
@@ -762,38 +786,36 @@ func checkAndAddTrack(trackID int, platform string) error {
 			return fmt.Errorf("failed to search track: %w", err)
 		}
 
-		trackExists, needDownload = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, trackID, platform, track.Artist, track.Album, track.Title)
+		trackExists, needDownload = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, trackID, platform, track.Artist, track.Album, track.Title, quality)
 		if needDownload {
-			file_path, file_name, err = downloadTrack(trackID, platform)
+			file_path, err = downloadTrack(trackID, platform, quality)
 			if err != nil {
 				return fmt.Errorf("failed to download track: %w", err)
 			}
 		}
 		if !trackExists {
-			if MAX_QUALITY == "6" {
-				track.SampleRate = 44.1
-				track.Bitrate = 16
-			}
+
+			track.SampleRate = quality.SampleRate
+			track.Bitrate = quality.Bitrate
 
 			track.Path = file_path
-			track.Filename = file_name
 
 			err = db.AddTrack(dbConn, track)
 			if err != nil {
 				return fmt.Errorf("failed to add track to database: %w", err)
 			}
 		} else if trackExists && needDownload {
-			err = db.UpdateTrackPathAndFilename(dbConn, trackID, file_path, file_name)
+			err = db.UpdateTrackPathAndFilename(dbConn, trackID, platform, quality, file_path)
 			if err != nil {
 				return fmt.Errorf("failed to update track in database: %w", err)
 			}
 		}
 	} else if trackExists && needDownload {
-		file_path, file_name, err = downloadTrack(trackID, platform)
+		file_path, err = downloadTrack(trackID, platform, quality)
 		if err != nil {
 			return fmt.Errorf("failed to download track: %w", err)
 		}
-		err = db.UpdateTrackPathAndFilename(dbConn, trackID, file_path, file_name)
+		err = db.UpdateTrackPathAndFilename(dbConn, trackID, platform, quality, file_path)
 		if err != nil {
 			return fmt.Errorf("failed to update track in database: %w", err)
 		}
