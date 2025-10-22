@@ -159,12 +159,9 @@ func UpdateTrackPathAndFilename(db *sql.DB, id int, platform string, quality uti
 	if err != nil {
 		return fmt.Errorf("failed to update track: %w", err)
 	}
-	_, err = db.Exec("UPDATE quality SET path = ? WHERE id = ? AND bitrate = ?", file_path, TrackId, quality.Bitrate)
+	_, err = db.Exec("INSERT INTO quality (id, path, bitrate, sample_rate) VALUES (?, ?, ?, ?)", TrackId, file_path, quality.Bitrate, quality.SampleRate)
 	if err != nil {
-		_, err := db.Exec("INSERT INTO quality (id, path, bitrate, sample_rate) VALUES (?, ?, ?, ?)", TrackId, file_path, quality.Bitrate, quality.SampleRate)
-		if err != nil {
-			return fmt.Errorf("failed to insert quality: %w", err)
-		}
+		return fmt.Errorf("failed to insert quality: %w", err)
 	}
 	return nil
 }
