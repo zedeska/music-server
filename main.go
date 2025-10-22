@@ -698,7 +698,7 @@ func downloadTrack(id int, platform string, quality utils.QualityLevel) (string,
 			return "", errors.New("failed to cache track")
 		}
 	} else if platform == "" {
-		ids, err := db.GetTrackIds(dbConn, id, quality)
+		ids, err := db.GetTrackIds(dbConn, id)
 		if err != nil {
 			return "", fmt.Errorf("failed to get track IDs: %w", err)
 		}
