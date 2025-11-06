@@ -200,7 +200,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		trackExist, _ := db.CheckIfTrackExists(dbConn, elt.ID, platformeName)
+		trackExist, _, _ := db.CheckIfTrackExists(dbConn, elt.ID, platformeName)
 
 		if !trackExist {
 			track, err := searchTrackFromID(elt.ID, platformeName)
@@ -755,7 +755,15 @@ func checkAndAddTrack(trackID int, platform string, quality utils.QualityLevel) 
 	}
 
 	// Check if track exists now (before starting download)
-	trackExists, needDownload := db.CheckIfTrackExists(dbConn, trackID, platform, quality)
+	trackExists, needDownload, artistExists := db.CheckIfTrackExists(dbConn, trackID, platform, quality)
+
+	if trackExists && !artistExists {
+		track, err := searchTrackFromID(trackID, platform)
+		if err != nil {
+			return fmt.Errorf("failed to search track: %w", err)
+		}
+		db.UpdateTrackArtist(dbConn, trackID, platform, track.ArtistID)
+	}
 
 	if !needDownload {
 		downloadMutex.Unlock()
