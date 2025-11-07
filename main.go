@@ -762,7 +762,10 @@ func checkAndAddTrack(trackID int, platform string, quality utils.QualityLevel) 
 		if err != nil {
 			return fmt.Errorf("failed to search track: %w", err)
 		}
-		db.UpdateTrackArtist(dbConn, trackID, platform, track.ArtistID)
+		err = db.UpdateTrackArtist(dbConn, trackID, platform, track.ArtistID)
+		if err != nil {
+			return fmt.Errorf("failed to update track artist: %w", err)
+		}
 	}
 
 	if !needDownload {

@@ -77,8 +77,8 @@ func InitDB(db *sql.DB) {
 }
 
 func CheckIfTrackExists(db *sql.DB, id int, platform string, quality ...utils.QualityLevel) (bool, bool, bool) {
-	var trackID int
-	var artistID int
+	var trackID int = 0
+	var artistID int = 0
 	var trackExists, needDownload, artistExists bool
 
 	err := db.QueryRow(fmt.Sprintf("SELECT id, IFNULL(%s, 0) FROM track WHERE %s = ?", "artist"+platform, "id"+platform), id).Scan(&trackID, &artistID)
