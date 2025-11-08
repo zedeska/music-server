@@ -260,17 +260,16 @@ func GetArtist(id string) (db.Artist, error) {
 	var tracks []db.Track
 	var albums []db.Album
 
-	for e, track := range temp_results_artist_top.Data {
+	for _, track := range temp_results_artist_top.Data {
 		tracks = append(tracks, db.Track{
-			ID:          int(track.ID),
-			Title:       track.Title,
-			Artist:      track.Artist.Name,
-			ArtistID:    track.Artist.ID,
-			Album:       track.Album.Title,
-			Duration:    track.Duration,
-			Cover:       track.Album.CoverXl,
-			TrackNumber: e + 1,
-			Platform:    "deezer",
+			ID:       int(track.ID),
+			Title:    track.Title,
+			Artist:   track.Artist.Name,
+			ArtistID: track.Artist.ID,
+			Album:    track.Album.Title,
+			Duration: track.Duration,
+			Cover:    track.Album.CoverXl,
+			Platform: "deezer",
 		})
 	}
 

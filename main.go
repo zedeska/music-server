@@ -668,11 +668,12 @@ func play(id int, platform string, quality utils.QualityLevel) (string, int, err
 }
 
 func constitutePlaylist(playlist *db.Playlist, tracks []int) error {
-	for _, trackID := range tracks {
+	for e, trackID := range tracks {
 		track, err := db.GetTrack(dbConn, trackID, "")
 		if err != nil {
 			return fmt.Errorf("failed to get track with ID %d: %w", trackID, err)
 		}
+		track.TrackNumber = e + 1
 		playlist.Tracks = append(playlist.Tracks, *track)
 	}
 	return nil
