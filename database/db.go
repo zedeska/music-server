@@ -55,7 +55,8 @@ func InitDB(db *sql.DB) {
 		CREATE TABLE IF NOT EXISTS in_playlist (
 			id_playlist INTEGER,
 			id_track INTEGER,
-			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist) ON DELETE CASCADE
+			FOREIGN KEY (id_playlist) REFERENCES playlist(id_playlist) ON DELETE CASCADE,
+			FOREIGN KEY (id_track) REFERENCES track(id) ON DELETE CASCADE
 		);
 
 		CREATE TABLE IF NOT EXISTS listened (
@@ -387,9 +388,19 @@ func GetPlaylistByID(db *sql.DB, playlistID int) (*Playlist, error) {
 }
 
 func AddTrackToPlaylist(db *sql.DB, playlistID, trackID int) error {
-	_, err := db.Exec("INSERT INTO in_playlist (id_playlist, id_track) VALUES (?, ?)", playlistID, trackID)
+	var exist int
+	err := db.QueryRow("SELECT COUNT(*) FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID).Scan(&exist)
 	if err != nil {
-		return fmt.Errorf("failed to insert track into playlist: %w", err)
+		return fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	if exist > 0 {
+		return errors.New("track already in playlist")
+	} else {
+		_, err := db.Exec("INSERT INTO in_playlist (id_playlist, id_track) VALUES (?, ?)", playlistID, trackID)
+		if err != nil {
+			return fmt.Errorf("failed to insert track into playlist: %w", err)
+		}
 	}
 
 	return nil
