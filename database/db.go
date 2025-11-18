@@ -388,7 +388,7 @@ func GetPlaylistByID(db *sql.DB, playlistID int) (*Playlist, error) {
 }
 
 func AddTrackToPlaylist(db *sql.DB, playlistID, trackID int) error {
-	var exist int
+	var exist int = 0
 	err := db.QueryRow("SELECT COUNT(*) FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID).Scan(&exist)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
