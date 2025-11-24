@@ -163,7 +163,7 @@ func GetTrack(db *sql.DB, id int, platformName string, quality ...utils.QualityL
 			track.ArtistID = intArtist
 		}
 	} else {
-		err := db.QueryRow(fmt.Sprintf("SELECT id, title, artist, album, year, duration, cover, %s FROM track WHERE %s = ?", "artist"+platformName, "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.ArtistID)
+		err := db.QueryRow(fmt.Sprintf("SELECT id, title, artist, album, year, duration, cover, IFNULL(%s, 0) FROM track WHERE %s = ?", "artist"+platformName, "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.ArtistID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to execute query: %w", err)
 		}
