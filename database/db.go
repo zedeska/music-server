@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"music-server/utils"
-	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -80,17 +79,17 @@ func InitDB(db *sql.DB) {
 
 func CheckIfTrackExists(db *sql.DB, id int, platform string, quality ...utils.QualityLevel) (bool, bool, bool) {
 	var trackID int = 0
-	var artistID string = ""
+	var artistID int = 0
 	var trackExists, needDownload, artistExists bool
 
-	err := db.QueryRow(fmt.Sprintf("SELECT id, IFNULL(%s, '') FROM track WHERE %s = ?", "artist"+platform, "id"+platform), id).Scan(&trackID, &artistID)
+	err := db.QueryRow(fmt.Sprintf("SELECT id, IFNULL(%s, 0) FROM track WHERE %s = ?", "artist"+platform, "id"+platform), id).Scan(&trackID, &artistID)
 	if trackID == 0 || err == sql.ErrNoRows {
 		trackExists = false
 	} else {
 		trackExists = true
 	}
 
-	if artistID != "" {
+	if artistID != 0 {
 		artistExists = true
 	} else {
 		artistExists = false
@@ -129,38 +128,22 @@ func CheckIfTrackExistsByArtistAndAlbum(db *sql.DB, id int, platform string, art
 
 func GetTrack(db *sql.DB, id int, platformName string, quality ...utils.QualityLevel) (*Track, error) {
 	var track Track
-	var idQobuz, idDeezer string
-	var artistQobuz, artistDeezer string
+	var idQobuz, idDeezer int = 0, 0
+	var artistQobuz, artistDeezer int = 0, 0
 
 	if platformName == "" {
-		err := db.QueryRow("SELECT id, IFNULL(idqobuz, ''), IFNULL(iddeezer, ''), title, artist, album, year, duration, cover, IFNULL(artistqobuz, ''), IFNULL(artistdeezer, '') FROM track WHERE id = ?", id).Scan(&track.ID, &idQobuz, &idDeezer, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &artistQobuz, &artistDeezer)
+		err := db.QueryRow("SELECT id, IFNULL(idqobuz, 0), IFNULL(iddeezer, 0), title, artist, album, year, duration, cover, IFNULL(artistqobuz, 0), IFNULL(artistdeezer, 0) FROM track WHERE id = ?", id).Scan(&track.ID, &idQobuz, &idDeezer, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &artistQobuz, &artistDeezer)
 		if err != nil {
 			return nil, fmt.Errorf("failed to execute query: %w", err)
 		}
-		if idQobuz != "" {
-			intId, err := strconv.Atoi(idQobuz)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert idqobuz to int: %w", err)
-			}
-			track.ID = intId
+		if idQobuz != 0 {
+			track.ID = idQobuz
 			track.Platform = "qobuz"
-			intArtist, err := strconv.Atoi(artistQobuz)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert artistqobuz to int: %w", err)
-			}
-			track.ArtistID = intArtist
-		} else if idDeezer != "" {
-			intId, err := strconv.Atoi(idDeezer)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert iddeezer to int: %w", err)
-			}
-			intArtist, err := strconv.Atoi(artistDeezer)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert artistdeezer to int: %w", err)
-			}
-			track.ID = intId
+			track.ArtistID = artistQobuz
+		} else if idDeezer != 0 {
+			track.ID = idDeezer
 			track.Platform = "deezer"
-			track.ArtistID = intArtist
+			track.ArtistID = artistDeezer
 		}
 	} else {
 		err := db.QueryRow(fmt.Sprintf("SELECT id, title, artist, album, year, duration, cover, IFNULL(%s, 0) FROM track WHERE %s = ?", "artist"+platformName, "id"+platformName), id).Scan(&track.ID, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &track.ArtistID)
