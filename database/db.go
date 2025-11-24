@@ -181,8 +181,8 @@ func AddTrack(db *sql.DB, track Track) error {
 	return nil
 }
 
-func AddPartialTrack(db *sql.DB, track Track) error {
-	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, album, year, duration, cover, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", "id"+track.Platform, "artist"+track.Platform),
+func AddPartialTrack(db *sql.DB, track Track, platformName string) error {
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO track (%s, title, artist, album, year, duration, cover, %s) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", "id"+platformName, "artist"+platformName),
 		track.ID, track.Title, track.Artist, track.Album, track.Year, track.Duration, track.Cover, track.ArtistID)
 	if err != nil {
 		return fmt.Errorf("failed to insert partial track: %w", err)

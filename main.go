@@ -212,7 +212,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Title)
 
 			if !trackExist {
-				err = db.AddPartialTrack(dbConn, track)
+				err = db.AddPartialTrack(dbConn, track, platformeName)
 				if err != nil {
 					http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
 					return
