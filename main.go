@@ -83,7 +83,7 @@ func toogleQobuzSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, err := db.GetUserID(dbConn, data.Token)
-	if err != nil || userID != 1 {
+	if err != nil || userID != 2 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -110,7 +110,7 @@ func toogleDeezerSearchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, err := db.GetUserID(dbConn, data.Token)
-	if err != nil || userID != 1 {
+	if err != nil || userID != 2 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
