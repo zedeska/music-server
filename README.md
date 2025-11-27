@@ -1,4 +1,4 @@
-# Music serveer
+# Music server
 
 This is a music server API that works as a fully fledged audio streaming/downloading platform backend.
 ## Features

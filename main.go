@@ -18,6 +18,8 @@ import (
 
 var SONG_FOLDER string
 var MAX_QUALITY string = "6"
+var DEEZER_SEARCH_ENABLED bool = true
+var QOBUZ_SEARCH_ENABLED bool = true
 var dbConn *sql.DB
 
 var (
@@ -59,7 +61,63 @@ func main() {
 	http.HandleFunc("/delete-playlist", deletePlaylistHandler)
 	http.HandleFunc("/delete-track-from-playlist", deleteTrackFromPlaylistHandler)
 	http.HandleFunc("/listened", listenedHandler)
+	http.HandleFunc("/admin/toogle-deezer-search", toogleDeezerSearchHandler)
+	http.HandleFunc("/admin/toogle-qobuz-search", toogleQobuzSearchHandler)
 	http.ListenAndServe(":8488", nil)
+}
+
+func toogleQobuzSearchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Enable bool `json:"enable"`
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(dbConn, data.Token)
+	if err != nil || userID != 1 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	QOBUZ_SEARCH_ENABLED = data.Enable
+
+	w.WriteHeader(200)
+}
+
+func toogleDeezerSearchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Enable bool `json:"enable"`
+		Token string `json:"token"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := db.GetUserID(dbConn, data.Token)
+	if err != nil || userID != 1 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	DEEZER_SEARCH_ENABLED = data.Enable
+
+	w.WriteHeader(200)
 }
 
 func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
@@ -559,53 +617,45 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results_qobuz, err := qobuz.Search(query)
-	if err != nil {
-		http.Error(w, "Invalid search query", http.StatusBadRequest)
+	if !DEEZER_SEARCH_ENABLED && !QOBUZ_SEARCH_ENABLED {
+		http.Error(w, "No search platforms enabled", http.StatusBadRequest)
 		return
-	}
-
-	results_deezer, err := deezer.Search(query)
-	if err != nil {
-		http.Error(w, "Invalid search query", http.StatusBadRequest)
-		return
-	}
-
-	filteredQobuzTracks := make([]db.Track, 0, len(results_qobuz.Tracks))
-	for _, q := range results_qobuz.Tracks {
-		dup := false
-		for _, d := range results_deezer.Tracks {
-			if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
-				dup = true
-				break
-			}
+	} else if QOBUZ_SEARCH_ENABLED  && !DEEZER_SEARCH_ENABLED {
+		results_qobuz, err := qobuz.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
 		}
-		if !dup {
-			filteredQobuzTracks = append(filteredQobuzTracks, q)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(results_qobuz.ToJSON())
+	} else if !QOBUZ_SEARCH_ENABLED && DEEZER_SEARCH_ENABLED {
+		results_deezer, err := deezer.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
 		}
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(results_deezer.ToJSON())
+	} else if QOBUZ_SEARCH_ENABLED && DEEZER_SEARCH_ENABLED {
+		results_deezer, err := deezer.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
+		}
+		results_qobuz, err := qobuz.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
+		}
+
+		filterSearchResult(results_deezer, results_qobuz)
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(results_deezer.ToJSON())
 	}
-
-	filteredQobuzAlbums := make([]db.Album, 0, len(results_qobuz.Albums))
-	for _, q := range results_qobuz.Albums {
-		dup := false
-		for _, d := range results_deezer.Albums {
-			if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
-				dup = true
-				break
-			}
-		}
-		if !dup {
-			filteredQobuzAlbums = append(filteredQobuzAlbums, q)
-		}
-	}
-
-	results_deezer.Tracks = append(results_deezer.Tracks, filteredQobuzTracks...)
-	results_deezer.Albums = append(results_deezer.Albums, filteredQobuzAlbums...)
-
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(results_deezer.ToJSON())
-	//w.Write(results_qobuz.ToJSON())
 }
 
 func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
@@ -835,4 +885,36 @@ func checkAndAddTrack(trackID int, platform string, quality utils.QualityLevel) 
 	}
 
 	return nil
+}
+
+func filterSearchResult(mainTab *db.Custom_search_result, toFilter *db.Custom_search_result) {
+	filteredTracks := make([]db.Track, 0, len(toFilter.Tracks))
+	for _, q := range toFilter.Tracks {
+		dup := false
+		for _, d := range mainTab.Tracks {
+			if utils.Normalize(d.Album) == utils.Normalize(q.Album) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) && utils.Normalize(d.Title) == utils.Normalize(q.Title) {
+				dup = true
+				break
+			}
+		}
+		if !dup {
+			filteredTracks = append(filteredTracks, q)
+		}
+	}
+	mainTab.Tracks = append(mainTab.Tracks, filteredTracks...)
+
+	filteredAlbums := make([]db.Album, 0, len(toFilter.Albums))
+	for _, q := range toFilter.Albums {
+		dup := false
+		for _, d := range mainTab.Albums {
+			if utils.Normalize(d.Title) == utils.Normalize(q.Title) && utils.Normalize(d.Artist) == utils.Normalize(q.Artist) {
+				dup = true
+				break
+			}
+		}
+		if !dup {
+			filteredAlbums = append(filteredAlbums, q)
+		}
+	}
+	mainTab.Albums = append(mainTab.Albums, filteredAlbums...)
 }
