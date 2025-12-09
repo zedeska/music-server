@@ -20,7 +20,8 @@ func searchTrack(query string) (*Deezer_track_search, error) {
 		},
 		Method: "GET",
 		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"Accept-Language": "fr-FR",
 		},
 		ResponseStruct: &Deezer_track_search{},
 	}
@@ -45,7 +46,8 @@ func searchAlbum(query string) (*Deezer_album_search, error) {
 		},
 		Method: "GET",
 		Headers: map[string]string{
-			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+			"Accept-Language": "fr-FR",
 		},
 		ResponseStruct: &Deezer_album_search{},
 	}
