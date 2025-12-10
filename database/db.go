@@ -458,12 +458,11 @@ func DeletePlaylist(db *sql.DB, playlistID int) error {
 	return nil
 }
 
-func DeleteTrackFromPlaylist(db *sql.DB, playlistID, trackID int) error {
-	_, err := db.Exec("DELETE FROM in_playlist WHERE id_playlist = ? AND id_track = ?", playlistID, trackID)
+func DeleteTrackFromPlaylist(db *sql.DB, playlistID, trackID int, platform string) error {
+	_, err := db.Exec(fmt.Sprintf("DELETE FROM in_playlist WHERE id_playlist = ? AND id_track IN (SELECT id FROM track WHERE id%s = ?)", platform), playlistID, trackID)
 	if err != nil {
 		return fmt.Errorf("failed to delete track from playlist: %w", err)
 	}
-
 	return nil
 }
 

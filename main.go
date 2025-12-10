@@ -130,6 +130,7 @@ func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		Token      string `json:"token"`
 		PlaylistID int    `json:"playlist_id"`
 		TrackID    int    `json:"track_id"`
+		Platform string `json:"platform"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -153,7 +154,7 @@ func deleteTrackFromPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.DeleteTrackFromPlaylist(dbConn, data.PlaylistID, data.TrackID)
+	err = db.DeleteTrackFromPlaylist(dbConn, data.PlaylistID, data.TrackID, data.Platform)
 	if err != nil {
 		http.Error(w, "Failed to delete track from playlist", http.StatusInternalServerError)
 		return
