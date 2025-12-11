@@ -476,3 +476,39 @@ func GetTrackIds(db *sql.DB, trackID int) ([]int, error) {
 	trackIDs := []int{qobuzID, deezerID}
 	return trackIDs, nil
 }
+
+func Search(db *sql.DB, query string, limit int) (*Custom_search_result, error) {
+	likeQuery := "%" + query + "%"
+	rows, err := db.Query("SELECT id, IFNULL(idqobuz, 0), IFNULL(iddeezer, 0), title, artist, album, year, duration, cover, IFNULL(artistqobuz, 0), IFNULL(artistdeezer, 0) FROM track WHERE title LIKE ? OR artist LIKE ? OR album LIKE ? LIMIT ?", likeQuery, likeQuery, likeQuery, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+	defer rows.Close()
+
+	var results Custom_search_result
+
+	for rows.Next() {
+		var track Track
+		var idQobuz, idDeezer int
+		var artistQobuz, artistDeezer int
+		if err := rows.Scan(&track.ID, &idQobuz, &idDeezer, &track.Title, &track.Artist, &track.Album, &track.Year, &track.Duration, &track.Cover, &artistQobuz, &artistDeezer); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		if idQobuz != 0 {
+			track.ID = idQobuz
+			track.Platform = "qobuz"
+			track.ArtistID = artistQobuz
+		} else if idDeezer != 0 {
+			track.ID = idDeezer
+			track.Platform = "deezer"
+			track.ArtistID = artistDeezer
+		}
+		results.Tracks = append(results.Tracks, track)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return &results, nil
+}

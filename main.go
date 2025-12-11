@@ -618,45 +618,33 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !DEEZER_SEARCH_ENABLED && !QOBUZ_SEARCH_ENABLED {
-		http.Error(w, "No search platforms enabled", http.StatusBadRequest)
+	search_result, err := db.Search(dbConn, query, 10)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
-	} else if QOBUZ_SEARCH_ENABLED  && !DEEZER_SEARCH_ENABLED {
-		results_qobuz, err := qobuz.Search(query)
-		if err != nil {
-			http.Error(w, "Invalid search query", http.StatusBadRequest)
-			return
-		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(results_qobuz.ToJSON())
-	} else if !QOBUZ_SEARCH_ENABLED && DEEZER_SEARCH_ENABLED {
-		results_deezer, err := deezer.Search(query)
-		if err != nil {
-			http.Error(w, "Invalid search query", http.StatusBadRequest)
-			return
-		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(results_deezer.ToJSON())
-	} else if QOBUZ_SEARCH_ENABLED && DEEZER_SEARCH_ENABLED {
-		results_deezer, err := deezer.Search(query)
-		if err != nil {
-			http.Error(w, "Invalid search query", http.StatusBadRequest)
-			return
-		}
-		results_qobuz, err := qobuz.Search(query)
-		if err != nil {
-			http.Error(w, "Invalid search query", http.StatusBadRequest)
-			return
-		}
-
-		filterSearchResult(results_deezer, results_qobuz)
-
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(results_deezer.ToJSON())
 	}
+
+	if QOBUZ_SEARCH_ENABLED {
+		results_qobuz, err := qobuz.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
+		}
+		filterSearchResult(search_result, results_qobuz)
+		
+	} 
+	if DEEZER_SEARCH_ENABLED {
+		results_deezer, err := deezer.Search(query)
+		if err != nil {
+			http.Error(w, "Invalid search query", http.StatusBadRequest)
+			return
+		}
+		filterSearchResult(search_result, results_deezer)
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(search_result.ToJSON())
 }
 
 func getAlbumHandler(w http.ResponseWriter, r *http.Request) {
