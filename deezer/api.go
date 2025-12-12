@@ -296,3 +296,40 @@ func GetArtist(id string) (db.Artist, error) {
 
 	return artist, nil
 }
+
+func GetPlaylistTracks(id int) (*[]struct{
+		ID       int `json:"id"`
+		Platform int `json:"platform"`
+	}, error) {
+	var tracks []struct{
+		ID       int `json:"id"`
+		Platform int `json:"platform"`
+	}
+
+	request := goaxios.GoAxios{
+		Url:    API_URL + "playlist/" + strconv.Itoa(id) + "/tracks",
+		Method: "GET",
+		Headers: map[string]string{
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0",
+		},
+		ResponseStruct: &Deezer_playlist_track{},
+	}
+
+	res := request.RunRest()
+	if res.Error != nil {
+		return nil, errors.New("Error: " + res.Error.Error())
+	}
+
+	temp_results := res.Body.(*Deezer_playlist_track)
+
+	for _, track := range temp_results.Data {
+		tracks = append(tracks, struct{
+			ID       int `json:"id"`
+			Platform int `json:"platform"`
+		}{
+			ID:       int(track.ID),
+			Platform: 1,
+		})
+	}
+	return &tracks, nil
+}

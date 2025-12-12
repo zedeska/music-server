@@ -242,55 +242,7 @@ func addToPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, elt := range data.TrackIDs {
-		e, err := db.IsTrackInPlaylist(dbConn, data.PlaylistID, elt.ID)
-		if err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		if e {
-			continue
-		}
-
-		platformeName, err := utils.GetPlatformName(elt.Platform)
-		if err != nil {
-			http.Error(w, "Invalid platform parameter", http.StatusBadRequest)
-			return
-		}
-
-		trackExist, _, _ := db.CheckIfTrackExists(dbConn, elt.ID, platformeName)
-
-		if !trackExist {
-			track, err := searchTrackFromID(elt.ID, platformeName)
-			if err != nil {
-				http.Error(w, "Failed to find track", http.StatusInternalServerError)
-				return
-			}
-
-			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Title)
-
-			if !trackExist {
-				err = db.AddPartialTrack(dbConn, track, platformeName)
-				if err != nil {
-					http.Error(w, "Failed to add partial track", http.StatusInternalServerError)
-					return
-				}
-			}
-		}
-
-		track, err := db.GetTrack(dbConn, elt.ID, platformeName)
-		if err != nil {
-			http.Error(w, "Failed to get track :"+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		err = db.AddTrackToPlaylist(dbConn, data.PlaylistID, track.ID)
-		if err != nil {
-			http.Error(w, "Failed to add track to playlist", http.StatusInternalServerError)
-			return
-		}
-	}
+	addToPlaylist(&data.TrackIDs, data.PlaylistID)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Tracks added to playlist successfully"))
@@ -305,6 +257,8 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Name  string `json:"name"`
 		Token string `json:"token"`
+		Imported string `json:"imported"`
+		ID int `json:"id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -322,6 +276,20 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
+	}
+
+	if data.Imported == "deezer" {
+		tracks, err := deezer.GetPlaylistTracks(data.ID)
+		if err != nil {
+			http.Error(w, "Failed to import deezer playlist tracks", http.StatusInternalServerError)
+			return
+		}
+
+		err = addToPlaylist(tracks, playlistID)
+		if err != nil {
+			http.Error(w, "Failed to add tracks to playlist", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -906,4 +874,51 @@ func filterSearchResult(mainTab *db.Custom_search_result, toFilter *db.Custom_se
 		}
 	}
 	mainTab.Albums = append(mainTab.Albums, filteredAlbums...)
+}
+
+func addToPlaylist(TrackIDs *[]struct{ID int `json:"id"`; Platform int `json:"platform"`}, PlaylistID int) error {
+	for _, elt := range *TrackIDs {
+		e, err := db.IsTrackInPlaylist(dbConn, PlaylistID, elt.ID)
+		if err != nil {
+			return errors.New("internal server error")
+		}
+
+		if e {
+			continue
+		}
+
+		platformeName, err := utils.GetPlatformName(elt.Platform)
+		if err != nil {
+			return errors.New("Invalid platform parameter")
+		}
+
+		trackExist, _, _ := db.CheckIfTrackExists(dbConn, elt.ID, platformeName)
+
+		if !trackExist {
+			track, err := searchTrackFromID(elt.ID, platformeName)
+			if err != nil {
+				return errors.New("Failed to find track")
+			}
+
+			trackExist, _ = db.CheckIfTrackExistsByArtistAndAlbum(dbConn, elt.ID, platformeName, track.Artist, track.Album, track.Title)
+
+			if !trackExist {
+				err = db.AddPartialTrack(dbConn, track, platformeName)
+				if err != nil {
+					return errors.New("Failed to add partial track")
+				}
+			}
+		}
+
+		track, err := db.GetTrack(dbConn, elt.ID, platformeName)
+		if err != nil {
+			return errors.New("Failed to get track")
+		}
+
+		err = db.AddTrackToPlaylist(dbConn, PlaylistID, track.ID)
+		if err != nil {
+			return errors.New("Failed to add track to playlist")
+		}
+	}
+	return nil
 }
