@@ -258,7 +258,7 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 		Name  string `json:"name"`
 		Token string `json:"token"`
 		Imported string `json:"imported"`
-		ID int `json:"id"`
+		ID string `json:"id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -279,7 +279,12 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.Imported == "deezer" {
-		tracks, err := deezer.GetPlaylistTracks(data.ID)
+		strId, err := strconv.Atoi(data.ID)
+		if err != nil {
+			http.Error(w, "Invalid deezer playlist ID", http.StatusBadRequest)
+			return
+		}
+		tracks, err := deezer.GetPlaylistTracks(strId)
 		if err != nil {
 			http.Error(w, "Failed to import deezer playlist tracks", http.StatusInternalServerError)
 			return
