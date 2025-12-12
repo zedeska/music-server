@@ -328,7 +328,7 @@ func GetPlaylistTracks(id int) (*[]struct{
 			Platform int `json:"platform"`
 		}{
 			ID:       int(track.ID),
-			Platform: 1,
+			Platform: 2,
 		})
 	}
 	return &tracks, nil

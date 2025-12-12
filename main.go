@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	db "music-server/database"
 	"music-server/deezer"
 	"music-server/qobuz"
@@ -293,7 +292,6 @@ func createPlaylistHandler(w http.ResponseWriter, r *http.Request) {
 
 		err = addToPlaylist(tracks, playlistID)
 		if err != nil {
-			log.Println(err)
 			http.Error(w, "Failed to add tracks to playlist", http.StatusInternalServerError)
 			return
 		}
